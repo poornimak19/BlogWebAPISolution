@@ -98,9 +98,9 @@ namespace BlogWebAPIApp.Controllers
             {
                 return Forbid(ex.Message);
             }
-            catch (InvalidOperationException ex)
+            catch (InvalidOperationException )
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { message = "Update failed" });
             }
         }
         #endregion
@@ -193,7 +193,7 @@ namespace BlogWebAPIApp.Controllers
         public async Task<ActionResult<PostDetailDto>> GetBySlug(string slug)
         {
             var post = await _posts.GetBySlug(slug);
-            if (post == null) return NotFound();
+            if (post == null) return NotFound(new { message = "Post Not Found.Enter the correct Tag name " });
 
             var currentUserId = User.GetUserId();
             if (!CanView(post, currentUserId))

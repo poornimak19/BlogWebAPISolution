@@ -77,6 +77,44 @@ namespace BlogWebAPIApp.Services
             var token = _tokens.CreateToken(user.Id, user.Username, user.Role.ToString());
             return (user, token);
         }
+
+
+        // NEW: Forgot Password (issue short-lived reset JWT)
+        public async Task<string> ForgotPassword(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return string.Empty;
+
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email.Trim());
+            if (user == null)
+            {
+                // Do NOT reveal whether the email exists
+                return string.Empty;
+            }
+
+            // e.g., 15 minutes expiry
+            var resetToken = _tokens.GeneratePasswordResetToken(user.Id, TimeSpan.FromMinutes(15));
+            return resetToken; // In production, email it; don't return it
+        }
+
+        // NEW: Reset Password (validate token and update password)
+        public async Task ResetPassword(string token, string newPassword)
+        {
+            if (string.IsNullOrWhiteSpace(token)) throw new InvalidOperationException("Invalid token.");
+            if (string.IsNullOrWhiteSpace(newPassword)) throw new InvalidOperationException("New password required.");
+
+            var userId = _tokens.ValidatePasswordResetToken(token); // throws if invalid/expired
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId) ?? throw new InvalidOperationException("User not found");
+
+            // Re-hash with a new salt (existingHashKey = null)
+            var newHash = _passwords.HashPassword(newPassword, null, out var newKey);
+            user.Password = newHash;
+            user.PasswordHash = newKey;
+
+            await _db.SaveChangesAsync();
+        }
+
+
+
     }
 
 

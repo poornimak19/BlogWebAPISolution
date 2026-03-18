@@ -1,4 +1,6 @@
-﻿
+﻿using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using BlogWebAPIApp.Context;
 using BlogWebAPIApp.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +9,7 @@ namespace BlogWebAPIApp.Repositories
 {
     public class Repository<K, T> : IRepository<K, T> where T : class
     {
-        protected BlogContext _blogContext;
+        protected readonly BlogContext _blogContext;
 
         public Repository(BlogContext blogContext)
         {
@@ -33,18 +35,23 @@ namespace BlogWebAPIApp.Repositories
             return null;
         }
 
+        // For composite keys or when you already have the entity instance
+        public async Task Delete(T item)
+        {
+            _blogContext.Remove(item);
+            await _blogContext.SaveChangesAsync();
+        }
+
         public async Task<T?> Get(K key)
         {
             var item = await _blogContext.FindAsync<T>(key);
-            return item != null ? item : null;
+            return item;
         }
 
         public async Task<IEnumerable<T>?> GetAll()
         {
             var items = await _blogContext.Set<T>().ToListAsync();
-            if (items.Any())
-                return items;
-            return null;
+            return items.Any() ? items : null;
         }
 
         public async Task<T?> Update(K key, T item)
@@ -57,6 +64,17 @@ namespace BlogWebAPIApp.Repositories
                 return existingItem;
             }
             return null;
+        }
+
+        public IQueryable<T> GetQueryable()
+        {
+            return _blogContext.Set<T>().AsQueryable();
+        }
+
+        // 🔧 Missing implementation added
+        public Task<int> SaveChangesAsync(CancellationToken ct = default)
+        {
+            return _blogContext.SaveChangesAsync(ct);
         }
     }
 }

@@ -1,4 +1,8 @@
-﻿namespace BlogWebAPIApp.Interfaces
+﻿using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace BlogWebAPIApp.Interfaces
 {
     public interface IRepository<K, T> where T : class
     {
@@ -7,5 +11,13 @@
         Task<T?> Add(T item);
         Task<T?> Update(K key, T item);
         Task<T?> Delete(K key);
+
+        // Needed for composite keys and tracked entity deletions
+        Task Delete(T item);
+
+        IQueryable<T> GetQueryable();
+
+        // Allow services to commit tracked changes when needed
+        Task<int> SaveChangesAsync(CancellationToken ct = default);
     }
 }

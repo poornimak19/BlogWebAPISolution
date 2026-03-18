@@ -1,18 +1,18 @@
-﻿using BlogWebAPIApp.Context;
-using BlogWebAPIApp.Interfaces;
+﻿using BlogWebAPIApp.Interfaces;
 using BlogWebAPIApp.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 using static BlogWebAPIApp.Models.Enum;
 
 namespace BlogWebAPIApp.Services
 {
-
     public class SearchService : ISearchService
     {
-        private readonly BlogContext _db;
+        private readonly IRepository<Guid, Post> _posts;
 
-        public SearchService(BlogContext db) => _db = db;
+        public SearchService(IRepository<Guid, Post> posts) => _posts = posts;
 
         public async Task<(IReadOnlyList<Post> items, int total)> SearchPosts(int page, int pageSize,
                                                                              string? q,
@@ -21,11 +21,11 @@ namespace BlogWebAPIApp.Services
                                                                              string? authorUsername,
                                                                              string? sort)
         {
-            var query = _db.Posts
-                .Include(p => p.Author)
-                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
-                .Include(p => p.PostCategories).ThenInclude(pc => pc.Category)
-                .Where(p => p.Status == PostStatus.Published && p.Visibility == Visibility.Public);
+            var query = _posts.GetQueryable()
+                              .Include(p => p.Author)
+                              .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                              .Include(p => p.PostCategories).ThenInclude(pc => pc.Category)
+                              .Where(p => p.Status == PostStatus.Published && p.Visibility == Visibility.Public);
 
             if (!string.IsNullOrWhiteSpace(q))
                 query = query.Where(p => p.Title.Contains(q) || (p.ContentMarkdown ?? "").Contains(q) || p.ContentHtml.Contains(q));
@@ -41,14 +41,16 @@ namespace BlogWebAPIApp.Services
 
             query = (sort?.ToLower()) switch
             {
-                "popular" => query.OrderByDescending(p => p.Likes.Count).ThenByDescending(p => p.PublishedAt ?? p.CreatedAt),
+                "popular" => query.OrderByDescending(p => p.Likes.Count)
+                                  .ThenByDescending(p => p.PublishedAt ?? p.CreatedAt),
                 _ => query.OrderByDescending(p => p.PublishedAt ?? p.CreatedAt)
             };
 
             var total = await query.CountAsync();
-            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            var items = await query.Skip((page - 1) * pageSize)
+                                   .Take(pageSize)
+                                   .ToListAsync();
             return (items, total);
         }
     }
-
 }

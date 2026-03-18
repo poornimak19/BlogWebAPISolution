@@ -1,47 +1,54 @@
-﻿using BlogWebAPIApp.Context;
-using BlogWebAPIApp.Interfaces;
+﻿using BlogWebAPIApp.Interfaces;
 using BlogWebAPIApp.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BlogWebAPIApp.Services
 {
-
     public class ReactionService : IReactionService
     {
-        private readonly BlogContext _db;
+        private readonly IRepository<Guid, PostLike> _postLikes;
+        private readonly IRepository<Guid, CommentLike> _commentLikes;
 
-        public ReactionService(BlogContext db) => _db = db;
+        public ReactionService(IRepository<Guid, PostLike> postLikes,
+                               IRepository<Guid, CommentLike> commentLikes)
+        {
+            _postLikes = postLikes;
+            _commentLikes = commentLikes;
+        }
 
         public async Task<(bool liked, int totalLikes)> TogglePostLike(Guid postId, Guid userId)
         {
-            var existing = await _db.PostLikes.FindAsync(userId, postId);
+            var existing = await _postLikes.GetQueryable()
+                                           .FirstOrDefaultAsync(l => l.PostId == postId && l.UserId == userId);
             if (existing != null)
             {
-                _db.PostLikes.Remove(existing);
-                await _db.SaveChangesAsync();
-                var count = await _db.PostLikes.CountAsync(l => l.PostId == postId);
+                await _postLikes.Delete(existing); // persists
+                var count = await _postLikes.GetQueryable().CountAsync(l => l.PostId == postId);
                 return (false, count);
             }
-            _db.PostLikes.Add(new PostLike { PostId = postId, UserId = userId, CreatedAt = DateTime.UtcNow });
-            await _db.SaveChangesAsync();
-            return (true, await _db.PostLikes.CountAsync(l => l.PostId == postId));
+
+            await _postLikes.Add(new PostLike { PostId = postId, UserId = userId, CreatedAt = DateTime.UtcNow });
+            var newCount = await _postLikes.GetQueryable().CountAsync(l => l.PostId == postId);
+            return (true, newCount);
         }
 
         public async Task<(bool liked, int totalLikes)> ToggleCommentLike(Guid commentId, Guid userId)
         {
-            var existing = await _db.CommentLikes.FindAsync(userId, commentId);
+            var existing = await _commentLikes.GetQueryable()
+                                              .FirstOrDefaultAsync(l => l.CommentId == commentId && l.UserId == userId);
             if (existing != null)
             {
-                _db.CommentLikes.Remove(existing);
-                await _db.SaveChangesAsync();
-                var count = await _db.CommentLikes.CountAsync(l => l.CommentId == commentId);
+                await _commentLikes.Delete(existing); // persists
+                var count = await _commentLikes.GetQueryable().CountAsync(l => l.CommentId == commentId);
                 return (false, count);
             }
-            _db.CommentLikes.Add(new CommentLike { CommentId = commentId, UserId = userId, CreatedAt = DateTime.UtcNow });
-            await _db.SaveChangesAsync();
-            return (true, await _db.CommentLikes.CountAsync(l => l.CommentId == commentId));
+
+            await _commentLikes.Add(new CommentLike { CommentId = commentId, UserId = userId, CreatedAt = DateTime.UtcNow });
+            var newCount = await _commentLikes.GetQueryable().CountAsync(l => l.CommentId == commentId);
+            return (true, newCount);
         }
     }
-
 }

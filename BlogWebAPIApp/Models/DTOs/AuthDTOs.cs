@@ -19,9 +19,9 @@ namespace BlogWebAPIApp.Models.DTOs
     );
 
     public record AuthResponseDto(
-        string AccessToken,
-        string Username,
-        string Role
+        string AccessToken
+        //string Username,
+        //string Role
     );
 
     public record MeResponseDto(

@@ -150,9 +150,9 @@ namespace BlogWebAPIApp.Controllers
             {
                 return Forbid();
             }
-            catch (InvalidOperationException ex)
+            catch (InvalidOperationException )
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { message = "Updating failed" });
             }
         }
         #endregion

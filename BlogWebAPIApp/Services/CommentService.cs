@@ -1,29 +1,35 @@
-﻿using BlogWebAPIApp.Context;
-using BlogWebAPIApp.Exceptions;
+﻿using BlogWebAPIApp.Exceptions;
 using BlogWebAPIApp.Interfaces;
 using BlogWebAPIApp.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 using static BlogWebAPIApp.Models.Enum;
 
 namespace BlogWebAPIApp.Services
 {
-
     public class CommentService : ICommentService
     {
-        private readonly BlogContext _db;
+        private readonly IRepository<Guid, Post> _posts;
+        private readonly IRepository<Guid, Comment> _comments;
 
-        public CommentService(BlogContext db) => _db = db;
+        public CommentService(IRepository<Guid, Post> posts,
+                              IRepository<Guid, Comment> comments)
+        {
+            _posts = posts;
+            _comments = comments;
+        }
 
         public async Task<Comment> Add(Guid postId, Guid authorId, string content, Guid? parentCommentId)
         {
-            var post = await _db.Posts.FindAsync(postId) ?? throw new EntityNotFoundException("Post");
+            var post = await _posts.Get(postId) ?? throw new EntityNotFoundException("Post");
             if (!post.CommentsEnabled) throw new InvalidOperationException("Comments disabled for this post");
 
             Comment? parent = null;
             if (parentCommentId.HasValue)
             {
-                parent = await _db.Comments.FindAsync(parentCommentId.Value);
+                parent = await _comments.Get(parentCommentId.Value);
                 if (parent == null || parent.PostId != postId)
                     throw new InvalidOperationException("Invalid parent comment");
             }
@@ -38,19 +44,28 @@ namespace BlogWebAPIApp.Services
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
-            _db.Comments.Add(comment);
-            await _db.SaveChangesAsync();
-            await _db.Entry(comment).Reference(x => x.Author).LoadAsync();
-            return comment;
+
+            await _comments.Add(comment); // persists
+
+            // Load Author for parity with original
+            var loaded = await _comments.GetQueryable()
+                                        .Include(x => x.Author)
+                                        .FirstOrDefaultAsync(c => c.Id == comment.Id);
+
+            return loaded ?? comment;
         }
 
         public async Task<Comment?> GetById(Guid commentId) =>
-            await _db.Comments.Include(c => c.Author).FirstOrDefaultAsync(c => c.Id == commentId);
+            await _comments.GetQueryable()
+                           .Include(c => c.Author)
+                           .FirstOrDefaultAsync(c => c.Id == commentId);
 
         public async Task Update(Guid commentId, Guid actorUserId, string content, string? status)
         {
-            var comment = await _db.Comments.Include(c => c.Post).FirstOrDefaultAsync(c => c.Id == commentId)
-                ?? throw new EntityNotFoundException("Comment");
+            var comment = await _comments.GetQueryable()
+                                         .Include(c => c.Post)
+                                         .FirstOrDefaultAsync(c => c.Id == commentId)
+                          ?? throw new EntityNotFoundException("Comment");
 
             // author can edit content; post author can moderate status
             var isAuthor = comment.AuthorId == actorUserId;
@@ -62,43 +77,48 @@ namespace BlogWebAPIApp.Services
             if (isAuthor) comment.Content = content;
             if (isPostAuthor && status != null) comment.Status = System.Enum.Parse<CommentStatus>(status, true);
 
-            await _db.SaveChangesAsync();
+            await _comments.SaveChangesAsync();
         }
 
         public async Task Delete(Guid commentId, Guid actorUserId)
         {
-            var comment = await _db.Comments.Include(c => c.Post).FirstOrDefaultAsync(c => c.Id == commentId)
-                ?? throw new EntityNotFoundException("Comment");
+            var comment = await _comments.GetQueryable()
+                                         .Include(c => c.Post)
+                                         .FirstOrDefaultAsync(c => c.Id == commentId)
+                          ?? throw new EntityNotFoundException("Comment");
 
             var isAuthor = comment.AuthorId == actorUserId;
             var isPostAuthor = comment.Post.AuthorId == actorUserId;
             if (!isAuthor && !isPostAuthor) throw new UnAuthorizedException("Not allowed");
 
-            _db.Comments.Remove(comment);
-            await _db.SaveChangesAsync();
+            await _comments.Delete(commentId); // persists
         }
 
         public async Task<(IReadOnlyList<Comment> items, int total)> GetByPost(Guid postId, int page, int pageSize)
         {
-            var query = _db.Comments
-                .Include(c => c.Author)
-                .Where(c => c.PostId == postId && c.Status == CommentStatus.Approved && c.ParentCommentId == null)
-                .OrderBy(c => c.CreatedAt);
+            var query = _comments.GetQueryable()
+                                 .Include(c => c.Author)
+                                 .Where(c => c.PostId == postId &&
+                                             c.Status == CommentStatus.Approved &&
+                                             c.ParentCommentId == null)
+                                 .OrderBy(c => c.CreatedAt);
 
             var total = await query.CountAsync();
-            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            var items = await query.Skip((page - 1) * pageSize)
+                                   .Take(pageSize)
+                                   .ToListAsync();
 
-            // Optionally load replies
+            // Optionally load replies (same as original; attach in controller to avoid circular refs)
             var parentIds = items.Select(i => i.Id).ToList();
-            var replies = await _db.Comments
-                .Include(c => c.Author)
-                .Where(c => c.PostId == postId && c.ParentCommentId != null && parentIds.Contains(c.ParentCommentId.Value))
-                .OrderBy(c => c.CreatedAt)
-                .ToListAsync();
-            // You can attach replies to parent in controller if you want to avoid circular refs
+            var replies = await _comments.GetQueryable()
+                                         .Include(c => c.Author)
+                                         .Where(c => c.PostId == postId &&
+                                                     c.ParentCommentId != null &&
+                                                     parentIds.Contains(c.ParentCommentId!.Value))
+                                         .OrderBy(c => c.CreatedAt)
+                                         .ToListAsync();
 
             return (items, total);
         }
     }
-
 }

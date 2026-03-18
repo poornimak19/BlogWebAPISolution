@@ -1,5 +1,6 @@
 ﻿using BlogWebAPIApp.Context;
 using BlogWebAPIApp.Interfaces;
+using BlogWebAPIApp.Middleware;
 using BlogWebAPIApp.Repositories;
 using BlogWebAPIApp.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -36,7 +37,7 @@ builder.Services.AddDbContext<BlogContext>(options =>
 });
 #endregion
 
-
+#region CORS
 // 4) CORS for Angular (http://localhost:4200 by default; can override via appsettings)
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
                      ?? new[] { "http://localhost:4200" };
@@ -49,8 +50,9 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowCredentials());
 });
+#endregion
 
-
+#region JWT 
 var jwt = builder.Configuration.GetSection("Jwt");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -72,6 +74,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             RoleClaimType = ClaimTypes.Role
         };
     });
+#endregion
 
 builder.Services.AddAuthorization(options =>
 {
@@ -112,6 +115,7 @@ if (app.Environment.IsDevelopment())
 }
 app.UseHttpsRedirection();
 app.UseCors("client");
+app.UseMiddleware<ErrorLoggingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 

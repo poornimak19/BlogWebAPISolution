@@ -2,9 +2,10 @@
 using BlogWebAPIApp.Interfaces;
 using BlogWebAPIApp.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Threading.Tasks;
+using System;
 
 namespace BlogWebAPIApp.Controllers
 {
@@ -12,10 +13,8 @@ namespace BlogWebAPIApp.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-
         private readonly IAuthService _auth;
         private readonly IUserService _users;
-
 
         public AuthController(IAuthService auth, IUserService users)
         {
@@ -25,13 +24,23 @@ namespace BlogWebAPIApp.Controllers
 
         #region Registration
         [HttpPost("register")]
-        public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterRequestDto dto)
+        public async Task<IActionResult> Register([FromBody] RegisterRequestDto dto)
         {
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
             try
             {
-                var (user, token) = await _auth.Register(dto.Email, dto.Username, dto.Password, dto.DisplayName,dto.Role);
-                return Ok(new AuthResponseDto(token, user.Username, user.Role.ToString()));
+                var (user, token) = await _auth.Register(
+                    dto.Email,
+                    dto.Username,
+                    dto.Password,
+                    dto.DisplayName,
+                    dto.Role
+                );
+
+                // Return ONLY the token
+                return Ok(new { token });
+                // If you prefer a bare string:
+                // return Ok(token);
             }
             catch (InvalidOperationException ex)
             {
@@ -42,13 +51,17 @@ namespace BlogWebAPIApp.Controllers
 
         #region Login
         [HttpPost("login")]
-        public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginRequestDto dto)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
         {
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
             try
             {
                 var (user, token) = await _auth.Login(dto.EmailOrUsername, dto.Password);
-                return Ok(new AuthResponseDto(token, user.Username, user.Role.ToString()));
+
+                // Return ONLY the token
+                return Ok(new { token });
+                // Or:
+                // return Ok(token);
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -83,8 +96,38 @@ namespace BlogWebAPIApp.Controllers
         #endregion
 
 
+        #region Forgot / Reset Password
+        // Step-1: user submits email → we issue a short-lived reset JWT
+        [HttpPost("forgot-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto dto)
+        {
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+            // In production, return only a neutral message.
+            var token = await _auth.ForgotPassword(dto.Email);
+            return Ok(new
+            {
+                message = "If your email exists, you will receive reset instructions.",
+#if DEBUG
+                // For local testing only
+                token
+#endif
+            });
+        }
+
+        // Step-2: user submits token + newPassword → update password if token valid
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto dto)
+        {
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+            await _auth.ResetPassword(dto.Token, dto.NewPassword);
+            return Ok(new { message = "Password has been reset successfully." });
+        }
+        #endregion
+
 
     }
-
 }
-

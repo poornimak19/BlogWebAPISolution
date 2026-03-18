@@ -1,43 +1,48 @@
-﻿using BlogWebAPIApp.Context;
-using BlogWebAPIApp.Interfaces;
+﻿using BlogWebAPIApp.Interfaces;
 using BlogWebAPIApp.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BlogWebAPIApp.Services
 {
-
     public class TaxonomyService : ITaxonomyService
     {
-        private readonly BlogContext _db;
+        private readonly IRepository<Guid, Tag> _tags;
+        private readonly IRepository<Guid, Category> _categories;
 
-        public TaxonomyService(BlogContext db) => _db = db;
+        public TaxonomyService(IRepository<Guid, Tag> tags, IRepository<Guid, Category> categories)
+        {
+            _tags = tags;
+            _categories = categories;
+        }
 
         public async Task<IReadOnlyList<Tag>> GetAllTags() =>
-            await _db.Tags.OrderBy(t => t.Name).ToListAsync();
+            await _tags.GetQueryable().OrderBy(t => t.Name).ToListAsync();
 
         public async Task<IReadOnlyList<Category>> GetAllCategories() =>
-            await _db.Categories.OrderBy(c => c.Name).ToListAsync();
+            await _categories.GetQueryable().OrderBy(c => c.Name).ToListAsync();
 
         public async Task<Tag> EnsureTag(string name)
         {
             var slug = Slugify(name);
-            var existing = await _db.Tags.FirstOrDefaultAsync(t => t.Slug == slug);
+            var existing = await _tags.GetQueryable().FirstOrDefaultAsync(t => t.Slug == slug);
             if (existing != null) return existing;
+
             var tag = new Tag { Name = name, Slug = slug };
-            _db.Tags.Add(tag);
-            await _db.SaveChangesAsync();
+            await _tags.Add(tag); // persists
             return tag;
         }
 
         public async Task<Category> EnsureCategory(string name)
         {
             var slug = Slugify(name);
-            var existing = await _db.Categories.FirstOrDefaultAsync(c => c.Slug == slug);
+            var existing = await _categories.GetQueryable().FirstOrDefaultAsync(c => c.Slug == slug);
             if (existing != null) return existing;
+
             var cat = new Category { Name = name, Slug = slug };
-            _db.Categories.Add(cat);
-            await _db.SaveChangesAsync();
+            await _categories.Add(cat); // persists
             return cat;
         }
 
@@ -50,5 +55,4 @@ namespace BlogWebAPIApp.Services
             return s.Trim('-');
         }
     }
-
 }
