@@ -29,6 +29,7 @@ namespace BlogWebAPIApp.Models.DTOs
 
         public bool? CommentsEnabled { get; set; }
         public bool? AutoApproveComments { get; set; }
+        public string CoverImageUrl { get; set; } = string.Empty;
     }
 
     // Request to update a post (all fields optional)

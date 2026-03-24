@@ -16,7 +16,8 @@ namespace BlogWebAPIApp.Interfaces
                           IEnumerable<string>? categoryNames,
                           IEnumerable<Guid>? allowedUserIds,
                           bool? commentsEnabled,
-                          bool? autoApproveComments);
+                          bool? autoApproveComments,
+                          string coverImage);
 
         Task<Post?> GetById(Guid postId);
         Task<Post?> GetBySlug(string slug);

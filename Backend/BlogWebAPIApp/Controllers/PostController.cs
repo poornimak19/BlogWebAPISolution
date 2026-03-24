@@ -46,7 +46,8 @@ namespace BlogWebAPIApp.Controllers
                     categoryNames: dto.CategoryNames,
                     allowedUserIds: dto.AllowedUserIds,
                     commentsEnabled: dto.CommentsEnabled,
-                    autoApproveComments: dto.AutoApproveComments
+                    autoApproveComments: dto.AutoApproveComments,
+                    coverImage:dto.CoverImageUrl
                 );
 
                 return CreatedAtAction(nameof(GetBySlug), new { slug = post.Slug }, post.ToDetailDto());

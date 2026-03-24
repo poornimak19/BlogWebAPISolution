@@ -38,7 +38,8 @@ namespace BlogWebAPIApp.Services
                                        System.Collections.Generic.IEnumerable<string>? categoryNames,
                                        System.Collections.Generic.IEnumerable<Guid>? allowedUserIds,
                                        bool? commentsEnabled,
-                                       bool? autoApproveComments)
+                                       bool? autoApproveComments,
+                                       string coverImageUrl)
         {
             var author = await _users.Get(authorId) ?? throw new InvalidOperationException("Author not found");
 
@@ -55,13 +56,13 @@ namespace BlogWebAPIApp.Services
                 Excerpt = excerpt,
                 ContentHtml = contentHtml,
                 ContentMarkdown = contentMarkdown,
-                CoverImageUrl = "",
+                CoverImageUrl = coverImageUrl,
                 Visibility = System.Enum.Parse<Visibility>(visibility, true),
                 CommentsEnabled = commentsEnabled ?? true,
                 AutoApproveComments = autoApproveComments ?? true,
                 Status = PostStatus.Draft,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
             };
 
             // Tags
@@ -161,6 +162,7 @@ namespace BlogWebAPIApp.Services
             if (autoApproveComments.HasValue) post.AutoApproveComments = autoApproveComments.Value;
             if (visibility != null) post.Visibility = System.Enum.Parse<Visibility>(visibility, true);
             if (status != null) post.Status = System.Enum.Parse<PostStatus>(status, true);
+            //if (coverImageUrl != null) post.CoverImageUrl = coverImageUrl;
 
             // Replace tags if provided
             if (tagNames != null)

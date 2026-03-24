@@ -115,6 +115,7 @@ removeCategory(name: string): void {
   }
 
   save(status: 'Draft' | 'Published'): void {
+    console.log(this.form.coverImageUrl)
     if (!this.form.title.trim()) { this.toast.error('Title is required.'); return; }
     const content = this.html();
     if (!content.replace(/<[^>]*>/g, '').trim()) { this.toast.error('Content cannot be empty.'); return; }
@@ -129,7 +130,7 @@ removeCategory(name: string): void {
       categoryNames: this.form.categoryNames,
       commentsEnabled: this.form.commentsEnabled,
       autoApproveComments: this.form.autoApprove,
-      coverImageUrl: this.form.coverImageUrl?.trim() || undefined      //coverimage
+      coverImageUrl: this.form.coverImageUrl?.trim() ?? ""
     }).subscribe({
       next: post => {
         if (status === 'Published') {

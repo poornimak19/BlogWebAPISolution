@@ -88,7 +88,7 @@
   --text-primary: #f2f2f2;   /* near-white — primary text */
   --text-muted:   #c8c8c8;   /* light grey — secondary text */
   --text-faint:   #909090;   /* mid grey — captions */
-  --text-ghost:   #565656;   /* dim grey — placeholders */
+  --text-ghost:   #f2f2f2;   /* dim grey — placeholders */
 
   /* Ink = white so buttons stay readable */
   --ink:     #f2f2f2;
