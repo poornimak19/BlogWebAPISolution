@@ -1,0 +1,147 @@
+<div class="editor-wrap">
+  <!-- Top bar -->
+  <div class="editor-bar">
+    <a routerLink="/" class="bar-back">← Back</a>
+    <span class="bar-title">New Story</span>
+    <div class="bar-actions">
+      <button class="bar-btn bar-btn--ghost" (click)="save('Draft')" [disabled]="saving()">{{ saving() ? '…' : 'Save Draft' }}</button>
+      <button class="bar-btn bar-btn--solid" (click)="save('Published')" [disabled]="saving() || !form.title.trim()">{{ saving() ? 'Publishing…' : 'Publish' }}</button>
+    </div>
+  </div>
+
+  <div class="editor-body">
+    <!-- Main editor -->
+    <div class="editor-main">
+      <textarea [(ngModel)]="form.title" name="title" placeholder="Title" class="editor-title" rows="1" maxlength="200" (input)="autoResize($event)"></textarea>
+      <textarea [(ngModel)]="form.excerpt" name="excerpt" placeholder="Subtitle or excerpt (optional)" class="editor-excerpt" rows="1" maxlength="400" (input)="autoResize($event)"></textarea>
+
+      <div class="rte-bar">
+        <button type="button" class="rte-btn" (click)="cmd('bold')"><strong>B</strong></button>
+        <button type="button" class="rte-btn" (click)="cmd('italic')"><em>I</em></button>
+        <button type="button" class="rte-btn" (click)="cmd('underline')"><u>U</u></button>
+        <span class="rte-sep"></span>
+        <button type="button" class="rte-btn" (click)="cmd('formatBlock','h2')">H2</button>
+        <button type="button" class="rte-btn" (click)="cmd('formatBlock','h3')">H3</button>
+        <!-- <button type="button" class="rte-btn" (click)="cmd('formatBlock','p')">¶</button> -->
+        <span class="rte-sep"></span>
+        <button type="button" class="rte-btn" (click)="cmd('insertUnorderedList')">• List</button>
+        <button type="button" class="rte-btn" (click)="cmd('insertOrderedList')">1. List</button>
+        <span class="rte-sep"></span>
+        <!-- <button type="button" class="rte-btn" (click)="cmd('formatBlock','blockquote')">" Quote</button> -->
+        <button type="button" class="rte-btn" (click)="insertLink()">🔗 Link</button>
+        <button type="button" class="rte-btn" (click)="insertImage()">🖼 Image</button>
+      </div>
+
+      <div id="rte" class="rte-editor" contenteditable="true"
+        data-placeholder="Tell your story…"
+        (input)="onInput($event)" (paste)="onPaste($event)"></div>
+
+      <div class="word-count">{{ wordCount() }} words</div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="editor-side">
+      <div class="side-sec">
+        <h4 class="side-label">Publishing</h4>
+        <div class="side-field">
+          <label>Visibility</label>
+          <select [(ngModel)]="form.visibility" name="vis" class="side-select">
+            <option value="Public">🌍 Public</option>
+            <option value="Private">🔒 Private</option>
+            <option value="Restricted">👥 Restricted</option>
+          </select>
+        </div>
+        <div class="side-field">
+          <label>Custom Slug <span class="opt">(optional)</span></label>
+          <input type="text" [(ngModel)]="form.slug" name="slug" placeholder="my-post-slug" class="side-input"/>
+        </div>
+      </div>
+
+      <div class="side-sec">
+        <h4 class="side-label">Cover Image</h4>
+        <input type="url" [(ngModel)]="form.coverImageUrl" name="cover" placeholder="https://…" class="side-input"/>
+        @if (form.coverImageUrl) {
+          <img [src]="form.coverImageUrl" alt="Cover preview" class="cover-preview" (error)="form.coverImageUrl=''"/>
+        }
+      </div>
+
+      <div class="side-sec">
+        <h4 class="side-label">Tags</h4>
+        <input type="text" [(ngModel)]="tagInput" name="ti" placeholder="Type and press Enter" class="side-input" (keydown.enter)="addTag($event)"/>
+        <div class="chips">
+          @for (t of form.tagNames; track t) {
+            <span class="chip">{{ t }}<button type="button" class="chip-x" (click)="removeTag(t)">×</button></span>
+          }
+        </div>
+        @if (suggestedTags().length > 0) {
+          <p class="side-hint">Suggestions</p>
+          <div class="chips">
+            @for (t of suggestedTags(); track t.id) {
+              <button type="button" class="chip chip--suggest" (click)="addSuggested(t.name)">+ {{ t.name }}</button>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- categories -->
+
+      <!-- <div class="side-sec">
+        <h4 class="side-label">Categories</h4>
+        <div class="chips">
+          @for (c of categories(); track c.id) {
+            <button type="button" class="chip" [class.chip--on]="form.categoryNames.includes(c.name)" (click)="toggleCat(c.name)">{{ c.name }}</button>
+          }
+        </div>
+      </div> -->
+
+      <!-- Categories -->
+<div class="side-sec">
+  <h4 class="side-label">Categories</h4>
+
+  <!-- New input like Tags -->
+  <input
+    type="text"
+    [(ngModel)]="categoryInput"
+    name="ci"
+    placeholder="Type and press Enter"
+    class="side-input"
+    (keydown.enter)="addCategory($event)"
+  />
+
+  <!-- Selected categories as chips with remove button -->
+  <div class="chips">
+    @for (c of form.categoryNames; track c) {
+      <span class="chip">
+        {{ c }}
+        <button type="button" class="chip-x" (click)="removeCategory(c)">×</button>
+      </span>
+    }
+  </div>
+
+  <!-- (Optional) Suggestions from catalog (like tags) -->
+  @if (suggestedCategories().length > 0) {
+    <p class="side-hint">Suggestions</p>
+    <div class="chips">
+      @for (c of suggestedCategories(); track c.id) {
+        <button
+          type="button"
+          class="chip chip--suggest"
+          (click)="addSuggestedCategory(c.name)"
+        >
+          + {{ c.name }}
+        </button>
+      }
+    </div>
+  }
+</div>
+
+      <div class="side-sec">
+        <h4 class="side-label">Comments</h4>
+        <label class="toggle-row"><input type="checkbox" [(ngModel)]="form.commentsEnabled" name="ce"/><span>Enable comments</span></label>
+        @if (form.commentsEnabled) {
+          <label class="toggle-row"><input type="checkbox" [(ngModel)]="form.autoApprove" name="aa"/><span>Auto-approve</span></label>
+        }
+      </div>
+    </aside>
+  </div>
+</div>

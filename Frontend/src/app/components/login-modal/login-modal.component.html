@@ -1,0 +1,89 @@
+@if (modal.visible()) {
+  <div class="modal-overlay" (click)="onOverlay($event)" role="dialog" aria-modal="true" aria-label="Authentication">
+    <div class="modal-box">
+
+      <button class="modal-close" (click)="modal.close()" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+
+      <div class="modal-brand">● inkwell</div>
+
+      <div class="modal-tabs" role="tablist">
+        <button class="modal-tab" [class.modal-tab--active]="tab()==='login'"    (click)="switchTab('login')"    role="tab">Sign In</button>
+        <button class="modal-tab" [class.modal-tab--active]="tab()==='register'" (click)="switchTab('register')" role="tab">Create Account</button>
+      </div>
+
+      <!-- LOGIN -->
+      @if (tab() === 'login') {
+        <form class="modal-form" (ngSubmit)="login()" novalidate>
+          <div class="form-group">
+            <label for="l-eou">Email or Username</label>
+            <input id="l-eou" type="text" [(ngModel)]="loginData.emailOrUsername" name="eou"
+              placeholder="you@example.com" autocomplete="username" required/>
+          </div>
+          <div class="form-group">
+            <label for="l-pwd">Password</label>
+            <input id="l-pwd" type="password" [(ngModel)]="loginData.password" name="pwd"
+              placeholder="••••••••" autocomplete="current-password" required/>
+          </div>
+          @if (error()) { <div class="form-error" role="alert">{{ error() }}</div> }
+          <button type="submit" class="btn-primary" [disabled]="busy()">{{ busy() ? 'Signing in…' : 'Sign In' }}</button>
+          <button type="button" class="btn-link" (click)="switchTab('forgot')">Forgot password?</button>
+        </form>
+      }
+
+      <!-- REGISTER -->
+      @if (tab() === 'register') {
+        <form class="modal-form" (ngSubmit)="register()" novalidate>
+          <div class="form-group">
+            <label for="r-email">Email <span class="req">*</span></label>
+            <input id="r-email" type="email" [(ngModel)]="registerData.email" name="email"
+              placeholder="you@example.com" autocomplete="email" required/>
+          </div>
+          <div class="form-group">
+            <label for="r-user">Username <span class="req">*</span></label>
+            <input id="r-user" type="text" [(ngModel)]="registerData.username" name="username"
+              placeholder="coolwriter" autocomplete="username" required/>
+          </div>
+          <div class="form-group">
+            <label for="r-pwd">Password <span class="req">*</span></label>
+            <input id="r-pwd" type="password" [(ngModel)]="registerData.password" name="pwd"
+              placeholder="Min 6 characters" autocomplete="new-password" required/>
+          </div>
+          <div class="form-group">
+            <label for="r-dn">Display Name <span class="opt">(optional)</span></label>
+            <input id="r-dn" type="text" [(ngModel)]="registerData.displayName" name="dn" placeholder="Your Name"/>
+          </div>
+          <div class="form-group">
+            <label for="r-role">Account type</label>
+            <select id="r-role" [(ngModel)]="registerData.role" name="role">
+              <option value="Reader">Reader — browse &amp; comment</option>
+              <option value="Blogger">Blogger — write &amp; read</option>
+            </select>
+          </div>
+          @if (error()) { <div class="form-error" role="alert">{{ error() }}</div> }
+          <button type="submit" class="btn-primary" [disabled]="busy()">{{ busy() ? 'Creating…' : 'Create Account' }}</button>
+        </form>
+      }
+
+      <!-- FORGOT -->
+      @if (tab() === 'forgot') {
+        <form class="modal-form" (ngSubmit)="forgotPassword()" novalidate>
+          <p class="form-desc">Enter your email and we'll send reset instructions.</p>
+          <div class="form-group">
+            <label for="f-email">Email Address</label>
+            <input id="f-email" type="email" [(ngModel)]="forgotEmail" name="fe"
+              placeholder="you@example.com" required/>
+          </div>
+          @if (error()) { <div class="form-error" role="alert">{{ error() }}</div> }
+          @if (forgotSent()) { <div class="form-ok" role="status">Check your inbox for reset instructions.</div> }
+          <button type="submit" class="btn-primary" [disabled]="busy() || forgotSent()">{{ busy() ? 'Sending…' : 'Send Reset Link' }}</button>
+          <button type="button" class="btn-link" (click)="switchTab('login')">← Back to Sign In</button>
+        </form>
+      }
+
+    </div>
+  </div>
+}

@@ -1,0 +1,116 @@
+<nav class="navbar" [class.navbar--scrolled]="scrolled()">
+  <div class="nav-inner">
+
+    <a routerLink="/" class="nav-brand" aria-label="Inkwell home">
+      <span class="brand-dot">●</span> inkwell
+    </a>
+
+    <!-- Primary nav links -->
+    <div class="nav-links">
+      <a routerLink="/" class="nav-link" routerLinkActive="nav-link--active"
+        [routerLinkActiveOptions]="{exact:true}">Home</a>
+      <a routerLink="/search" class="nav-link" routerLinkActive="nav-link--active">Explore</a>
+      @if (auth.isLoggedIn() && (auth.userRole() === 'Blogger' || auth.userRole() === 'Admin')) {
+        <a routerLink="/create" class="nav-link" routerLinkActive="nav-link--active">Write</a>
+      }
+    </div>
+
+    <!-- Search -->
+    <div class="nav-search">
+      <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="search" placeholder="Search stories…" class="search-input"
+        (keyup.enter)="onSearch($event)" aria-label="Search stories"/>
+    </div>
+
+    <div class="nav-actions">
+
+      <!-- Theme toggle ☀ / ☾ -->
+      <button class="theme-toggle"
+        (click)="theme.toggle()"
+        [attr.aria-label]="theme.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
+        title="Toggle theme">
+        @if (theme.isDark()) {
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1"  x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22"   x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78"  x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64"  x2="19.78" y2="4.22"/>
+          </svg>
+        } @else {
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        }
+      </button>
+
+      @if (auth.isLoggedIn()) {
+
+        <!-- Write button (Bloggers / Admins only) -->
+        @if (auth.userRole() === 'Blogger' || auth.userRole() === 'Admin') {
+          <a routerLink="/create" class="btn-write">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Write
+          </a>
+        }
+
+        <!-- Profile menu — (click)="toggleMenu($event)" stops propagation -->
+        <div class="nav-user" (click)="toggleMenu($event)">
+
+          <!-- Avatar: uploaded image or letter initial -->
+          @if (avatarUrl) {
+            <img [src]="avatarUrl" class="nav-avatar nav-avatar--img"
+              [alt]="displayName"
+              (error)="$any($event.target).style.display='none'"/>
+          } @else {
+            <div class="nav-avatar">{{ avatarLetter }}</div>
+          }
+
+          <span class="nav-username">{{ displayName }}</span>
+
+          <svg class="chevron" [class.chevron--up]="menuOpen()"
+            width="11" height="11" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+
+          <!-- Dropdown — visible when menuOpen() is true -->
+          @if (menuOpen()) {
+            <div class="nav-dropdown" role="menu" aria-label="User menu">
+              <a routerLink="/me" class="dd-item" (click)="closeMenu()" role="menuitem">
+                My Profile
+              </a>
+              @if (auth.userRole() === 'Blogger' || auth.userRole() === 'Admin') {
+                <a routerLink="/me" class="dd-item" (click)="closeMenu()" role="menuitem">
+                  My Posts
+                </a>
+                <a routerLink="/create" class="dd-item" (click)="closeMenu()" role="menuitem">
+                  New Story
+                </a>
+              }
+              <hr class="dd-divider"/>
+              <button class="dd-item dd-item--danger"
+                (click)="logout()" role="menuitem">
+                Sign Out
+              </button>
+            </div>
+          }
+        </div>
+
+      } @else {
+        <span class="nav-guest">Welcome, Guest</span>
+        <button class="btn-signin" (click)="loginModal.open()">Sign In</button>
+      }
+
+    </div>
+  </div>
+</nav>

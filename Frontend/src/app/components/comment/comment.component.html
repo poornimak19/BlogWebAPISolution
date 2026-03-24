@@ -1,0 +1,106 @@
+<section class="cs">
+  <h3 class="cs-title">Responses ({{ total() }})</h3>
+
+  <!-- Compose box -->
+  @if (auth.isLoggedIn()) {
+    <div class="compose-row">
+      <div class="cs-av">{{ avatarLetter }}</div>
+      <div class="compose-body">
+        <textarea [(ngModel)]="newText" name="newText"
+          placeholder="Share your thoughts…" rows="3" class="cs-textarea"
+          (focus)="composeFocused.set(true)"></textarea>
+        @if (composeFocused()) {
+          <div class="compose-actions">
+            <button class="btn-cancel" type="button" (click)="cancelCompose()">Cancel</button>
+            <button class="btn-respond" type="button"
+              (click)="submit()" [disabled]="!newText.trim() || submitting()">
+              {{ submitting() ? 'Posting…' : 'Respond' }}
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="sign-cta" (click)="loginModal.open()" role="button" tabindex="0">
+      Sign in to join the conversation →
+    </div>
+  }
+
+  <!-- Thread list -->
+  <div class="cs-list">
+    @if (loading()) {
+      <p class="cs-loading">Loading responses…</p>
+    } @else if (threads().length === 0) {
+      <p class="cs-empty">No responses yet. Be the first to share your thoughts!</p>
+    } @else {
+      @for (thread of threads(); track thread.parent.id) {
+        <div class="cs-thread">
+
+          <!-- Parent comment -->
+          <div class="cs-item">
+            <a [routerLink]="['/profile', thread.parent.author?.username]" class="cs-av">
+              {{ (thread.parent.author?.username || '?')[0].toUpperCase() }}
+            </a>
+            <div class="cs-body">
+              <div class="cs-header">
+                <a [routerLink]="['/profile', thread.parent.author?.username]" class="cs-author">
+                  {{ thread.parent.author?.displayName || thread.parent.author?.username || 'Anonymous' }}
+                </a>
+                <time class="cs-time">{{ thread.parent.createdAt | date:'MMM d, y' }}</time>
+                @if (thread.parent.status === 'Pending') {
+                  <span class="cs-pending">Pending</span>
+                }
+              </div>
+              <p class="cs-text">{{ thread.parent.content }}</p>
+              <div class="cs-actions">
+                <button class="cs-btn" [class.cs-btn--liked]="isLiked(thread.parent.id)"
+                  (click)="likeComment(thread.parent)" type="button">♥ Like</button>
+                <button class="cs-btn" (click)="startReply(thread.parent.id)" type="button">Reply</button>
+                @if (canDelete(thread.parent)) {
+                  <button class="cs-btn cs-btn--danger"
+                    (click)="deleteComment(thread.parent.id)" type="button">Delete</button>
+                }
+              </div>
+
+              @if (replyingTo() === thread.parent.id) {
+                <div class="reply-form">
+                  <textarea [(ngModel)]="replyText" name="replyText"
+                    placeholder="Write a reply…" rows="2"
+                    class="cs-textarea cs-textarea--sm"></textarea>
+                  <div class="compose-actions">
+                    <button class="btn-cancel" type="button" (click)="replyingTo.set(null); replyText=''">Cancel</button>
+                    <button class="btn-respond btn-respond--sm" type="button"
+                      (click)="submitReply(thread.parent.id)"
+                      [disabled]="!replyText.trim() || submitting()">Reply</button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Replies -->
+          @for (reply of thread.replies; track reply.id) {
+            <div class="cs-item cs-item--reply">
+              <div class="cs-av cs-av--sm">{{ (reply.author?.username || '?')[0].toUpperCase() }}</div>
+              <div class="cs-body">
+                <div class="cs-header">
+                  <span class="cs-author">{{ reply.author?.displayName || reply.author?.username || 'Anonymous' }}</span>
+                  <time class="cs-time">{{ reply.createdAt | date:'MMM d, y' }}</time>
+                </div>
+                <p class="cs-text">{{ reply.content }}</p>
+                <div class="cs-actions">
+                  <button class="cs-btn" [class.cs-btn--liked]="isLiked(reply.id)"
+                    (click)="likeComment(reply)" type="button">♥ Like</button>
+                  @if (canDelete(reply)) {
+                    <button class="cs-btn cs-btn--danger"
+                      (click)="deleteReply(thread.parent.id, reply.id)" type="button">Delete</button>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+</section>

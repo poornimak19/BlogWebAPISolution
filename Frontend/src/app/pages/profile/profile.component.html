@@ -1,0 +1,189 @@
+@if (loading()) {
+  <div class="profile-sk"><div class="psk-header"></div><div class="psk-body"></div></div>
+}
+
+@if (!loading() && profile()) {
+  <div class="profile-page">
+    <div class="profile-header">
+      <div class="ph-inner">
+        <div class="ph-left">
+          <!-- Avatar: real image or letter -->
+          <div class="profile-av-wrap">
+            @if (avatarSrc()) {
+              <img [src]="avatarSrc()" class="profile-av profile-av--img" [alt]="profile()!.username" (error)="$any($event.target).style.display='none'"/>
+            } @else {
+              <div class="profile-av">{{ avatarLetter() }}</div>
+            }
+          </div>
+
+          <div class="profile-info">
+            <h1 class="profile-name">{{ profile()!.displayName || profile()!.username }}</h1>
+            <p class="profile-handle">&#64;{{ profile()!.username }}</p>
+            <!-- <span class="role-badge role-badge--{{ (profile()!.role || 'reader').toLowerCase() }}">
+              {{ profile()!.role || 'Reader' }}
+            </span> -->
+            @if (profile()!.bio) { <p class="profile-bio">{{ profile()!.bio }}</p> }
+            <div class="profile-stats">
+              @if (isOwnProfile() && isReader()) {
+                <span class="stat-highlight"><strong>{{ profile()!.following }}</strong><span class="stat-label">Following</span></span>
+              } @else {
+                <span><strong>{{ profile()!.followers }}</strong> followers</span>
+                <span><strong>{{ profile()!.following }}</strong> following</span>
+              }
+              @if (!isReader() || !isOwnProfile()) {
+                <span><strong>{{ publishedCount() }}</strong> stories</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="ph-actions">
+          @if (isOwnProfile()) {
+            <button class="btn-action btn-action--outline" (click)="openEdit()">Edit Profile</button>
+            @if (isBlogger()) {
+              <a routerLink="/create" class="btn-action btn-action--solid">+ New Story</a>
+            }
+          } @else if (auth.isLoggedIn()) {
+            <button class="btn-action"
+              [class.btn-action--solid]="!isFollowing()"
+              [class.btn-action--outline]="isFollowing()"
+              (click)="toggleFollow()">
+              {{ isFollowing() ? '✓ Following' : 'Follow' }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-tabs">
+      <div class="tabs-inner">
+        @if (isOwnProfile() && isReader()) {
+          <button class="tab" [class.tab--on]="activeTab()==='following'" (click)="switchToFollowing()">
+            Following ({{ profile()!.following }})
+          </button>
+        }
+        @if (!isOwnProfile() || isBlogger()) {
+          <button class="tab" [class.tab--on]="activeTab()==='posts'" (click)="activeTab.set('posts')">
+            Stories {{ publishedCount() > 0 ? '(' + publishedCount() + ')' : '' }}
+          </button>
+        }
+        @if (isOwnProfile() && isBlogger()) {
+          <button class="tab" [class.tab--on]="activeTab()==='drafts'" (click)="switchToDrafts()">
+            Drafts {{ drafts().length > 0 ? '(' + drafts().length + ')' : '' }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="profile-content">
+      @if (activeTab() === 'following') {
+        <div class="following-section">
+          <p class="following-desc">Bloggers you follow — click any story to read.</p>
+          @if (profile()!.following === 0) {
+            <div class="empty-state"><div class="empty-icon">🔍</div><h3>Not following anyone yet</h3>
+              <a routerLink="/search" class="btn-explore">Explore Stories</a></div>
+          } @else {
+            <div class="following-hint">
+              <p>You follow <strong>{{ profile()!.following }}</strong> blogger{{ profile()!.following !== 1 ? 's' : '' }}.</p>
+              <a routerLink="/search" class="btn-explore">Browse All Stories</a>
+            </div>
+          }
+        </div>
+      }
+
+      @if (activeTab() === 'posts') {
+        @if (posts().length > 0) {
+          <div class="posts-grid">@for (post of posts(); track post.id) { <app-post-card [post]="post"/> }</div>
+        } @else {
+          <div class="empty-state"><div class="empty-icon">✍️</div><h3>No published stories yet</h3>
+            @if (isOwnProfile() && isBlogger()) { <a routerLink="/create" class="btn-write">Write your first story</a> }
+          </div>
+        }
+      }
+
+      @if (activeTab() === 'drafts') {
+        @if (drafts().length > 0) {
+          <div class="drafts-list">
+            @for (post of drafts(); track post.id) {
+              <div class="draft-row">
+                <div><h4 class="draft-title">{{ post.title }}</h4><span class="draft-meta">Last edited {{ post.updatedAt | date:'MMM d, y' }}</span></div>
+                <div class="draft-actions">
+                  <a [routerLink]="['/edit', post.id]" class="draft-btn">Edit</a>
+                  <button class="draft-btn draft-btn--del" (click)="deleteDraft(post)" type="button">Delete</button>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-state"><div class="empty-icon">📝</div><h3>No drafts</h3></div>
+        }
+      }
+    </div>
+  </div>
+
+  <!-- Edit Profile overlay -->
+  @if (editMode()) {
+    <div class="edit-overlay" (click)="closeOverlay($event)">
+      <div class="edit-modal">
+        <div class="edit-header">
+          <h3>Edit Profile</h3>
+          <button class="edit-close" (click)="editMode.set(false)" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="edit-body">
+
+          <!-- Avatar upload from file manager -->
+          <div class="em-field">
+            <label>Profile Picture</label>
+            <div class="avatar-upload-row">
+              <!-- Preview: image or letter -->
+              <div class="av-preview-wrap">
+                @if (avatarPreview() || ef.avatarUrl) {
+                  <img [src]="avatarPreview() || ef.avatarUrl" class="av-preview-img" alt="Avatar preview" (error)="clearAvatar()"/>
+                } @else {
+                  <div class="av-preview-letter">{{ avatarLetter() }}</div>
+                }
+              </div>
+              <div class="av-upload-actions">
+                <label class="btn-upload" for="avatar-file-input">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  Upload from file manager
+                </label>
+                <input id="avatar-file-input" type="file" accept="image/*" class="file-input-hidden" (change)="onAvatarFileChange($event)"/>
+                @if (avatarPreview() || ef.avatarUrl) {
+                  <button type="button" class="btn-remove-av" (click)="clearAvatar()">Remove photo</button>
+                }
+                <p class="av-hint">JPG, PNG, GIF · max 5 MB. Default: first letter of name.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="em-field">
+            <label>Display Name</label>
+            <input type="text" [(ngModel)]="ef.displayName" class="em-input" placeholder="Your name"/>
+          </div>
+          <div class="em-field">
+            <label>Bio</label>
+            <textarea [(ngModel)]="ef.bio" class="em-input em-textarea" rows="4" placeholder="Tell readers about yourself…"></textarea>
+          </div>
+        </div>
+        <div class="edit-footer">
+          <button class="btn-action btn-action--ghost" (click)="editMode.set(false)" type="button">Cancel</button>
+          <button class="btn-action btn-action--solid" (click)="saveProfile()" [disabled]="saving()" type="button">
+            {{ saving() ? 'Saving…' : 'Save Changes' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+}
+
+@if (!loading() && !profile()) {
+  <div class="profile-404"><h2>User not found</h2><a routerLink="/">← Home</a></div>
+}

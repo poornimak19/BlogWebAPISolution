@@ -1,0 +1,213 @@
+<!-- Hero -->
+<!-- <section class="hero">
+  <div class="hero-inner">
+    <p class="hero-kicker">A home for curious minds</p>
+    <h1 class="hero-headline">Stories worth reading.</h1>
+    <p class="hero-sub">Discover ideas, perspectives, and expertise from writers across every domain.</p>
+    @if (!auth.isLoggedIn()) {
+      <button class="hero-cta" (click)="loginModal.open()">Start reading — it's free</button>
+    } @else if (auth.userRole() === 'Blogger' || auth.userRole() === 'Admin') {
+      <a routerLink="/create" class="hero-cta">Start writing today</a>
+    }
+  </div>
+</section> -->
+
+<!-- Hero -->
+<section class="hero">
+
+  <!-- Background image layer -->
+  <div class="hero-bg-img" aria-hidden="true"></div>
+
+  <!-- Dark overlay so text stays readable over any image -->
+  <div class="hero-overlay" aria-hidden="true"></div>
+
+  <!-- Floating decorative ink-drop shapes -->
+  <div class="hero-deco hero-deco--1" aria-hidden="true"></div>
+  <div class="hero-deco hero-deco--2" aria-hidden="true"></div>
+  <div class="hero-deco hero-deco--3" aria-hidden="true"></div>
+
+  <div class="hero-inner">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      Writers · Thinkers · Readers
+    </div>
+    <h1 class="hero-headline">Stories worth<br><em>reading.</em></h1>
+    <p class="hero-sub">
+      Discover ideas, perspectives, and expertise from writers across every domain.
+    </p>
+    @if (!auth.isLoggedIn()) {
+      <div class="hero-actions">
+        <button class="hero-cta hero-cta--primary" (click)="loginModal.open()">
+          Start reading — it's free
+        </button>
+        <a routerLink="/search" class="hero-cta hero-cta--ghost">Explore stories →</a>
+      </div>
+    } @else if (auth.userRole() === 'Blogger' || auth.userRole() === 'Admin') {
+      <div class="hero-actions">
+        <a routerLink="/create" class="hero-cta hero-cta--primary">Start writing today</a>
+        <a routerLink="/search" class="hero-cta hero-cta--ghost">Explore stories →</a>
+      </div>
+    } @else {
+      <div class="hero-actions">
+        <a routerLink="/search" class="hero-cta hero-cta--primary">Explore stories →</a>
+      </div>
+    }
+
+    <!-- Trust strip -->
+    <div class="hero-strip">
+      <span>📖 Long-form articles</span>
+      <span class="hero-strip-dot">·</span>
+      <span>💡 Ideas & insights</span>
+      <span class="hero-strip-dot">·</span>
+      <span>✍️ Original voices</span>
+    </div>
+  </div>
+
+</section>
+
+<div class="home-content">
+
+  <!-- ── Filter bar: multi-select tags + categories ──
+  <div class="filter-section">
+    <div class="filter-row">
+      <div class="filter-group-inline">
+        <span class="filter-label">Tags</span>
+        <div class="filter-chips">
+          @for (tag of tags(); track tag.id) {
+            <button class="filter-chip"
+              [class.filter-chip--on]="selectedTags().includes(tag.slug)"
+              (click)="toggleTag(tag.slug)"
+              type="button">
+              {{ tag.name }}
+              @if (selectedTags().includes(tag.slug)) { <span class="chip-check">✓</span> }
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (categories().length > 0) {
+        <div class="filter-group-inline">
+          <span class="filter-label">Categories</span>
+          <div class="filter-chips">
+            @for (cat of categories(); track cat.id) {
+              <button class="filter-chip"
+                [class.filter-chip--on]="selectedCats().includes(cat.slug)"
+                (click)="toggleCat(cat.slug)"
+                type="button">
+                {{ cat.name }}
+                @if (selectedCats().includes(cat.slug)) { <span class="chip-check">✓</span> }
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (hasFilters()) {
+      <div class="active-filters">
+        <span class="af-label">Active filters:</span>
+        @for (s of selectedTags(); track s) {
+          <span class="af-chip">{{ s }}<button class="af-x" (click)="toggleTag(s)" type="button">×</button></span>
+        }
+        @for (s of selectedCats(); track s) {
+          <span class="af-chip af-chip--cat">{{ s }}<button class="af-x" (click)="toggleCat(s)" type="button">×</button></span>
+        }
+        <button class="af-clear" (click)="clearAllFilters()" type="button">Clear all</button>
+      </div>
+    }
+  </div> -->
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <span class="toolbar-count">
+      @if (loading()) { Loading… } @else { {{ total() }} {{ total() === 1 ? 'story' : 'stories' }} }
+    </span>
+    <div class="toolbar-sort">
+      <button [class.active]="sort() === 'latest'"  (click)="setSort('latest')">Latest</button>
+      <button [class.active]="sort() === 'popular'" (click)="setSort('popular')">Popular</button>
+    </div>
+  </div>
+
+  <!-- Skeleton -->
+  @if (loading()) {
+    <div class="posts-grid">
+      @for (s of skeletons; track $index) {
+        <div class="sk-card">
+          <div class="sk-img"></div>
+          <div class="sk-body">
+            <div class="sk-line sk-title"></div>
+            <div class="sk-line sk-sub"></div>
+            <div class="sk-line sk-short"></div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Posts grid – cover images shown inside post-card -->
+  @if (!loading() && posts().length > 0) {
+    <div class="posts-grid">
+      @for (post of posts(); track post.id) {
+        <app-post-card [post]="post"/>
+      }
+    </div>
+  }
+
+  <!-- Empty -->
+  @if (!loading() && posts().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">📝</div>
+      <h3>No stories found</h3>
+      <p>{{ hasFilters() ? 'Try different filters.' : 'Be the first to publish something amazing.' }}</p>
+      @if (hasFilters()) {
+        <button class="empty-cta" (click)="clearAllFilters()" type="button">Clear filters</button>
+      } @else if (auth.userRole() === 'Blogger' || auth.userRole() === 'Admin') {
+        <a routerLink="/create" class="empty-cta">Write a story</a>
+      }
+    </div>
+  }
+
+  <!-- ── Pagination with numbered buttons ── -->
+  @if (!loading() && totalPages() > 1) {
+    <nav class="pagination" aria-label="Pagination">
+      <!-- First -->
+      <button class="pg-btn pg-btn--arrow" [disabled]="page() === 1" (click)="goTo(1)" title="First page">
+        «
+      </button>
+      <!-- Prev -->
+      <button class="pg-btn pg-btn--arrow" [disabled]="page() === 1" (click)="goTo(page() - 1)">
+        ‹ Prev
+      </button>
+
+      <!-- Leading ellipsis -->
+      @if (pageNumbers()[0] > 1) {
+        <button class="pg-btn" (click)="goTo(1)">1</button>
+        @if (pageNumbers()[0] > 2) { <span class="pg-ellipsis">…</span> }
+      }
+
+      <!-- Numbered page buttons -->
+      @for (p of pageNumbers(); track p) {
+        <button class="pg-btn" [class.pg-btn--on]="p === page()" (click)="goTo(p)">{{ p }}</button>
+      }
+
+      <!-- Trailing ellipsis -->
+      @if (pageNumbers()[pageNumbers().length - 1] < totalPages()) {
+        @if (pageNumbers()[pageNumbers().length - 1] < totalPages() - 1) {
+          <span class="pg-ellipsis">…</span>
+        }
+        <button class="pg-btn" (click)="goTo(totalPages())">{{ totalPages() }}</button>
+      }
+
+      <!-- Next -->
+      <button class="pg-btn pg-btn--arrow" [disabled]="page() === totalPages()" (click)="goTo(page() + 1)">
+        Next ›
+      </button>
+      <!-- Last -->
+      <button class="pg-btn pg-btn--arrow" [disabled]="page() === totalPages()" (click)="goTo(totalPages())" title="Last page">
+        »
+      </button>
+    </nav>
+    <p class="pg-info">Page {{ page() }} of {{ totalPages() }}</p>
+  }
+
+</div>

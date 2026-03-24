@@ -1,0 +1,135 @@
+<!-- Skeleton -->
+@if (loading()) {
+  <div class="sk-wrap">
+    <div class="sk-cover"></div>
+    <div class="sk-body">
+      <div class="sk-line sk-t"></div>
+      <div class="sk-line sk-m"></div>
+      <div class="sk-line sk-b"></div>
+      <div class="sk-line sk-b sk-short"></div>
+    </div>
+  </div>
+}
+
+<!-- Post -->
+@if (!loading() && post()) {
+  <div class="detail-wrap">
+
+    <!-- ── Hero cover image – prominent at top ── -->
+    @if (post()!.coverImageUrl) {
+      <div class="detail-hero-cover">
+        <img [src]="post()!.coverImageUrl" [alt]="post()!.title" class="detail-hero-img"/>
+        <div class="detail-hero-overlay"></div>
+      </div>
+    } @else {
+      <div class="detail-hero-cover detail-hero-cover--placeholder">
+        <span class="placeholder-char">{{ post()!.title[0]?.toUpperCase() }}</span>
+      </div>
+    }
+
+    <header class="detail-header">
+      <div class="dh-inner">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a routerLink="/">Home</a><span class="bc-sep">›</span>
+          @if (post()!.categories.length > 0) {
+            <a [routerLink]="['/search']" [queryParams]="{ category: post()!.categories[0] }">{{ post()!.categories[0] }}</a>
+            <span class="bc-sep">›</span>
+          }
+          <span>{{ post()!.title | slice:0:40 }}{{ post()!.title.length > 40 ? '…' : '' }}</span>
+        </nav>
+
+        <div class="taxonomy-row">
+          @for (tag of post()!.tags; track tag) {
+            <a [routerLink]="['/search']" [queryParams]="{ tag: tag }" class="pill pill--tag">{{ tag }}</a>
+          }
+          @for (cat of post()!.categories; track cat) {
+            <a [routerLink]="['/search']" [queryParams]="{ category: cat }" class="pill pill--cat">{{ cat }}</a>
+          }
+        </div>
+
+        <h1 class="detail-title">{{ post()!.title }}</h1>
+        @if (post()!.excerpt) { <p class="detail-excerpt">{{ post()!.excerpt }}</p> }
+
+        <div class="author-row">
+          <a [routerLink]="['/profile', post()!.author.username]" class="author-link">
+            <div class="author-av">{{ post()!.author.username[0].toUpperCase() }}</div>
+            <div>
+              <span class="author-name">{{ post()!.author.displayName || post()!.author.username }}</span>
+              <span class="author-meta">{{ (post()!.publishedAt ?? post()!.createdAt) | date:'MMMM d, yyyy' }} · {{ readTime() }} min read</span>
+            </div>
+          </a>
+          <div class="detail-actions">
+            <button class="act-btn" [class.act-btn--liked]="liked()" (click)="toggleLike()">
+              <svg width="15" height="15" viewBox="0 0 24 24" [attr.fill]="liked()?'#e53e3e':'none'" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>{{ likeCount() }}
+            </button>
+            <button class="act-btn" (click)="share()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>Share
+            </button>
+            @if (isAuthor()) {
+              <a [routerLink]="['/edit', post()!.id]" class="act-btn act-btn--edit">Edit</a>
+              <button class="act-btn act-btn--danger" (click)="deletePost()">Delete</button>
+            }
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="detail-body">
+      <div class="prose" [innerHTML]="post()!.contentHtml"></div>
+
+      <div class="post-footer-actions">
+        <button class="act-lg" [class.act-lg--liked]="liked()" (click)="toggleLike()">
+          <svg width="18" height="18" viewBox="0 0 24 24" [attr.fill]="liked()?'#e53e3e':'none'" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>{{ likeCount() }} likes
+        </button>
+        <button class="act-lg" (click)="share()">Share this story</button>
+      </div>
+
+      <hr class="divider"/>
+
+      <div class="author-card">
+        <div class="author-card-av">{{ post()!.author.username[0].toUpperCase() }}</div>
+        <div>
+          <p class="author-card-label">Written by</p>
+          <a [routerLink]="['/profile', post()!.author.username]" class="author-card-name">
+            {{ post()!.author.displayName || post()!.author.username }}
+          </a>
+        </div>
+      </div>
+
+      @if (post()!.commentsEnabled) {
+        <hr class="divider"/>
+        <app-comment [postId]="post()!.id"/>
+      }
+
+      <!-- ── Related posts ── -->
+      @if (relatedPosts().length > 0) {
+        <hr class="divider"/>
+        <section class="related-section">
+          <h3 class="related-title">More stories you might enjoy</h3>
+          <div class="related-grid">
+            @for (rp of relatedPosts(); track rp.id) {
+              <app-post-card [post]="rp"/>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  </div>
+}
+
+<!-- Not found -->
+@if (!loading() && !post()) {
+  <div class="not-found">
+    <div class="nf-code">404</div>
+    <h2>Story not found</h2>
+    <p>This story may have been removed or made private.</p>
+    <a routerLink="/" class="nf-btn">← Back to home</a>
+  </div>
+}

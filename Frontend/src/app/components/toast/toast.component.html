@@ -1,0 +1,9 @@
+<div class="toast-host" aria-live="polite">
+  @for (t of toastSvc.toasts(); track trackById($index, t)) {
+    <div class="toast toast--{{ t.type }}" role="alert" (click)="toastSvc.remove(t.id)">
+      <span class="toast-icon">{{ iconFor(t.type) }}</span>
+      <span class="toast-msg">{{ t.message }}</span>
+      <button class="toast-close" aria-label="Dismiss">×</button>
+    </div>
+  }
+</div>
