@@ -67,55 +67,6 @@
 
 <div class="home-content">
 
-  <!-- ── Filter bar: multi-select tags + categories ──
-  <div class="filter-section">
-    <div class="filter-row">
-      <div class="filter-group-inline">
-        <span class="filter-label">Tags</span>
-        <div class="filter-chips">
-          @for (tag of tags(); track tag.id) {
-            <button class="filter-chip"
-              [class.filter-chip--on]="selectedTags().includes(tag.slug)"
-              (click)="toggleTag(tag.slug)"
-              type="button">
-              {{ tag.name }}
-              @if (selectedTags().includes(tag.slug)) { <span class="chip-check">✓</span> }
-            </button>
-          }
-        </div>
-      </div>
-
-      @if (categories().length > 0) {
-        <div class="filter-group-inline">
-          <span class="filter-label">Categories</span>
-          <div class="filter-chips">
-            @for (cat of categories(); track cat.id) {
-              <button class="filter-chip"
-                [class.filter-chip--on]="selectedCats().includes(cat.slug)"
-                (click)="toggleCat(cat.slug)"
-                type="button">
-                {{ cat.name }}
-                @if (selectedCats().includes(cat.slug)) { <span class="chip-check">✓</span> }
-              </button>
-            }
-          </div>
-        </div>
-      }
-    </div>
-
-    @if (hasFilters()) {
-      <div class="active-filters">
-        <span class="af-label">Active filters:</span>
-        @for (s of selectedTags(); track s) {
-          <span class="af-chip">{{ s }}<button class="af-x" (click)="toggleTag(s)" type="button">×</button></span>
-        }
-        @for (s of selectedCats(); track s) {
-          <span class="af-chip af-chip--cat">{{ s }}<button class="af-x" (click)="toggleCat(s)" type="button">×</button></span>
-        }
-        <button class="af-clear" (click)="clearAllFilters()" type="button">Clear all</button>
-      </div>
-    }
-  </div> -->
 
   <!-- Toolbar -->
   <div class="toolbar">

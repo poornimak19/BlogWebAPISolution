@@ -2,9 +2,9 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { PostService } from '../../services/post.service';
-import { TaxonomyService } from '../../services/blog.services';
+import { TaxonomyService,UserService } from '../../services/blog.services';
 import { ToastService } from '../../services/ui.services';
-import { TagDto, CategoryDto } from '../../models/blog.models';
+import { TagDto, CategoryDto,UserSearchDto } from '../../models/blog.models';
 
 @Component({
   selector: 'app-create-blog',
@@ -17,6 +17,7 @@ export class CreateBlogComponent implements OnInit {
   readonly router      = inject(Router);
   readonly postSvc     = inject(PostService);
   readonly taxonomySvc = inject(TaxonomyService);
+  readonly userSvc     = inject(UserService);
   readonly toast       = inject(ToastService);
 
   saving     = signal(false);
@@ -25,21 +26,22 @@ export class CreateBlogComponent implements OnInit {
   html       = signal('');
   tagInput   = '';
   categoryInput = '';
+  userSearchQuery   = '';
+  userSearchResults = signal<UserSearchDto[]>([]);
+  allowedUsers      = signal<UserSearchDto[]>([]);   // selected users
+  searching         = signal(false);
 
   form = {
     title: '', excerpt: '', slug: '',
-    visibility: 'Public' as 'Public' | 'Private' | 'Restricted',
+    visibility: 'Public' as 'Public' | 'Private',
     coverImageUrl: '', tagNames: [] as string[], categoryNames: [] as string[],
     commentsEnabled: true, autoApprove: true
   };
 
-  suggestedTags = () => this.tags().filter(t => !this.form.tagNames.includes(t.name.toLowerCase())).slice(0, 8);
+suggestedTags = () => this.tags().filter(t => !this.form.tagNames.includes(t.name.toLowerCase())).slice(0, 8);
 
   
-suggestedCategories = () =>
-  this.categories()
-    .filter(c => !this.form.categoryNames.includes(c.name))
-    .slice(0, 8);
+suggestedCategories = () =>this.categories().filter(c => !this.form.categoryNames.includes(c.name)).slice(0, 8);
 
 // NEW: add on Enter
 addCategory(e: Event): void {
@@ -73,6 +75,8 @@ removeCategory(name: string): void {
     this.taxonomySvc.getCategories().subscribe({ next: c => this.categories.set(c) });
   }
 
+    
+   // ── Editor helpers
   autoResize(e: Event): void {
     const el = e.target as HTMLTextAreaElement;
     el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px';
@@ -119,6 +123,7 @@ removeCategory(name: string): void {
     if (!this.form.title.trim()) { this.toast.error('Title is required.'); return; }
     const content = this.html();
     if (!content.replace(/<[^>]*>/g, '').trim()) { this.toast.error('Content cannot be empty.'); return; }
+    
     this.saving.set(true);
     this.postSvc.create({
       title: this.form.title.trim(),
@@ -128,6 +133,7 @@ removeCategory(name: string): void {
       visibility: this.form.visibility,
       tagNames: this.form.tagNames,
       categoryNames: this.form.categoryNames,
+      allowedUserIds:     this.allowedUsers().map(u => u.id),
       commentsEnabled: this.form.commentsEnabled,
       autoApproveComments: this.form.autoApprove,
       coverImageUrl: this.form.coverImageUrl?.trim() ?? ""

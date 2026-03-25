@@ -1,12 +1,4 @@
 /* Hero */
-/* .hero { background: var(--hero-bg); color: var(--hero-text); padding: 96px 24px 80px; text-align: center; position: relative; overflow: hidden; }
-.hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255,255,255,0.04) 0%, transparent 70%); pointer-events: none; }
-.hero-inner { max-width: 640px; margin: 0 auto; position: relative; }
-.hero-kicker { font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 16px; font-weight: 500; }
-.hero-headline {color: whitesmoke; font-family: var(--font-serif); font-size: clamp(2.4rem,5.5vw,3.8rem); font-weight: 700; letter-spacing: -0.025em; margin: 0 0 20px; line-height: 1.15; }
-.hero-sub { font-size: 1.05rem; color: rgba(255,255,255,0.6); margin: 0 0 36px; line-height: 1.65; }
-.hero-cta { display: inline-block; padding: 15px 36px; background: var(--hero-cta-bg); color: var(--hero-cta-text); border: none; border-radius: 100px; font-size: 0.95rem; font-weight: 700; cursor: pointer; text-decoration: none; transition: transform 0.2s, opacity 0.2s; font-family: inherit; }
-.hero-cta:hover { transform: translateY(-2px); opacity: 0.92; } */
 
 .hero {
   position: relative;

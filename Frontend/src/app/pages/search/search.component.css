@@ -76,3 +76,4 @@
 .no-results p, .search-hint p { font-size: 0.9rem; margin: 0 auto; max-width: 360px; line-height: 1.65; }
 
 @media (max-width: 768px) { .search-body { flex-direction: column; gap: 24px; } .search-filters { width: 100%; } .results-grid { grid-template-columns: 1fr; } }
+

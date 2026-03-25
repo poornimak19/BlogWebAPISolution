@@ -1,6 +1,11 @@
 <article class="post-card">
 
-  <!-- Cover image — always rendered; falls back to styled placeholder -->
+  <!-- ⭐ FEATURED FOR YOU (Private posts only) -->
+  @if (post.visibility === 'Private') {
+    <div class="badge-featured">⭐ Featured for you</div>
+  }
+
+  <!-- Cover image -->
   <a [routerLink]="['/blog', post.slug]" class="card-cover-link" tabindex="-1" aria-hidden="true">
     @if (hasCover) {
       <img
@@ -11,7 +16,6 @@
         (error)="onImgError()"
       />
     } @else {
-      <!-- Placeholder with gradient + first letter of title -->
       <div class="card-cover-placeholder" [attr.aria-label]="post.title">
         <span class="placeholder-letter">{{ post.title[0]?.toUpperCase() }}</span>
       </div>
@@ -21,11 +25,20 @@
   <div class="card-body">
 
     <div class="card-meta">
-      <a [routerLink]="['/profile', post.author.username]" class="card-author" (click)="$event.stopPropagation()">
-        <div class="author-av">{{ post.author.username[0].toUpperCase() }}</div>
+      <a [routerLink]="['/profile', post.author.username]"
+         class="card-author"
+         (click)="$event.stopPropagation()">
+
+        <div class="author-av">
+          {{ post.author.username[0].toUpperCase() }}
+        </div>
+
         <span>{{ post.author.displayName || post.author.username }}</span>
       </a>
-      <time class="card-date">{{ (post.publishedAt ?? post.createdAt) | date:'MMM d' }}</time>
+
+      <time class="card-date">
+        {{ (post.publishedAt ?? post.createdAt) | date:'MMM d' }}
+      </time>
     </div>
 
     <a [routerLink]="['/blog', post.slug]" class="card-title-link">
@@ -37,29 +50,41 @@
     }
 
     <div class="card-footer">
+
       <div class="card-tags">
         @for (tag of post.tags.slice(0, 3); track tag) {
-          <a [routerLink]="['/search']" [queryParams]="{ tag: tag }"
-            class="card-tag" (click)="$event.stopPropagation()">{{ tag }}</a>
+          <a [routerLink]="['/search']"
+             [queryParams]="{ tag: tag }"
+             class="card-tag"
+             (click)="$event.stopPropagation()">
+            {{ tag }}
+          </a>
         }
       </div>
 
       <div class="card-actions">
-        <button class="act-btn" [class.act-btn--liked]="liked()"
-          (click)="toggleLike($event)"
-          [attr.aria-label]="liked() ? 'Unlike' : 'Like'">
+        <button class="act-btn"
+                [class.act-btn--liked]="liked()"
+                (click)="toggleLike($event)"
+                [attr.aria-label]="liked() ? 'Unlike' : 'Like'">
+
           <svg width="14" height="14" viewBox="0 0 24 24"
-            [attr.fill]="liked() ? '#e53e3e' : 'none'"
-            stroke="currentColor" stroke-width="2">
+               [attr.fill]="liked() ? '#e53e3e' : 'none'"
+               stroke="currentColor" stroke-width="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06
               a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78
               1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
+
           {{ likeCount() }}
+
         </button>
-        <button class="act-btn" (click)="share($event)" aria-label="Copy link">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2">
+
+        <button class="act-btn"
+                (click)="share($event)"
+                aria-label="Copy link">
+          <svg width="14" height="14" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="18" cy="5"  r="3"/>
             <circle cx="6"  cy="12" r="3"/>
             <circle cx="18" cy="19" r="3"/>
@@ -67,6 +92,7 @@
             <line x1="15.41" y1="6.51"  x2="8.59"  y2="10.49"/>
           </svg>
         </button>
+
       </div>
     </div>
 

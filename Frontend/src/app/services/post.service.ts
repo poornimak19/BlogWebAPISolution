@@ -10,14 +10,34 @@ export class PostService {
 
   constructor(private http: HttpClient) {}
 
-  getPublished(page = 1, pageSize = 9, q?: string, tag?: string, category?: string): Observable<PagedResponseDto<PostSummaryDto>> {
-    let p = new HttpParams().set('page', page).set('pageSize', pageSize);
-    if (q)        p = p.set('q', q);
-    if (tag)      p = p.set('tag', tag);
-    if (category) p = p.set('category', category);
-    return this.http.get<PagedResponseDto<PostSummaryDto>>(`${this.base}/published`, { params: p })
-      .pipe(catchError(e => throwError(() => e)));
+  getPublished(
+  page = 1,
+  pageSize = 9,
+  q?: string,
+  tag?: string,
+  category?: string
+): Observable<PagedResponseDto<PostSummaryDto>> {
+
+  let params = new HttpParams()
+    .set('page', page)
+    .set('pageSize', pageSize);
+
+  if (q) params = params.set('q', q);
+  if (tag) params = params.set('tag', tag);
+  if (category) params = params.set('category', category);
+
+  // ✅ Send logged-in user ID to backend
+  const userId = localStorage.getItem('userId');      // OR your authService.getUserId()
+
+  if (userId) {
+    params = params.set('currentUserId', userId);
   }
+
+  return this.http.get<PagedResponseDto<PostSummaryDto>>(
+    `${this.base}/published`,
+    { params }
+  );
+}
 
   getBySlug(slug: string): Observable<PostDetailDto> {
     return this.http.get<PostDetailDto>(`${this.base}/slug/${slug}`)

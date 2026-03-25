@@ -59,6 +59,8 @@ namespace BlogWebAPIApp.Models.DTOs
 
         /// <summary> optional; "Draft" | "Published" | "Archived" (usually use /publish endpoint for publish) </summary>
         public string? Status { get; set; }
+
+        public string CoverImageUrl { get; set; } = string.Empty;
     }
 
     // Response DTOs

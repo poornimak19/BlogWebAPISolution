@@ -34,7 +34,7 @@ export class HomeComponent implements OnInit {
   selectedCats = signal<string[]>([]);
   sort         = signal<'latest' | 'popular'>('latest');
 
-  readonly pageSize  = 3;
+  readonly pageSize  = 6;
   readonly skeletons = Array(9).fill(0);
 
   latestCover = computed(() => {

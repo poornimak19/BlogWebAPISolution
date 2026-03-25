@@ -77,6 +77,24 @@ namespace BlogWebAPIApp.Controllers
 
         }
         #endregion
+
+        // SEARCH USERS
+        [Authorize]
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<UserSearchDto>>> SearchUsers([FromQuery] string q)
+        {
+            if (string.IsNullOrWhiteSpace(q))
+                return Ok(new List<UserSearchDto>());
+
+            var results = await _users.SearchUsers(q);
+            return Ok(results.Select(u => new UserSearchDto
+            {
+                Id = u.Id,
+                Username = u.Username,
+                DisplayName = u.DisplayName,
+                AvatarUrl = u.AvatarUrl
+            }));
+        }
     }
 
 }

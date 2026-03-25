@@ -77,3 +77,11 @@ export interface UpdateUserProfileDto {
   bio?: string;
   avatarUrl?: string;
 }
+
+
+export interface UserSearchDto {
+  id: string;
+  username: string;
+  displayName?: string;
+  avatarUrl?: string;
+}

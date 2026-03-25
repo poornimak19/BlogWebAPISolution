@@ -34,6 +34,7 @@ namespace BlogWebAPIApp.Controllers
 
             try
             {
+
                 var post = await _posts.Create(
                     authorId: userId.Value,
                     title: dto.Title,
@@ -43,11 +44,10 @@ namespace BlogWebAPIApp.Controllers
                     contentMarkdown: dto.ContentMarkdown,
                     visibility: dto.Visibility,
                     tagNames: dto.TagNames,
-                    categoryNames: dto.CategoryNames,
-                    allowedUserIds: dto.AllowedUserIds,
+                    categoryNames: dto.CategoryNames,                   
                     commentsEnabled: dto.CommentsEnabled,
                     autoApproveComments: dto.AutoApproveComments,
-                    coverImage:dto.CoverImageUrl
+                    coverImageUrl:dto.CoverImageUrl
                 );
 
                 return CreatedAtAction(nameof(GetBySlug), new { slug = post.Slug }, post.ToDetailDto());
@@ -82,11 +82,11 @@ namespace BlogWebAPIApp.Controllers
                     contentMarkdown: dto.ContentMarkdown,
                     visibility: dto.Visibility,
                     tagNames: dto.TagNames,
-                    categoryNames: dto.CategoryNames,
-                    allowedUserIds: dto.AllowedUserIds,
+                    categoryNames: dto.CategoryNames,                    
                     commentsEnabled: dto.CommentsEnabled,
                     autoApproveComments: dto.AutoApproveComments,
-                    status: dto.Status
+                    status: dto.Status,
+                    coverImageUrl:dto.CoverImageUrl
                 );
 
                 return Ok(post.ToDetailDto());
@@ -157,10 +157,11 @@ namespace BlogWebAPIApp.Controllers
         }
         #endregion
 
-       
+
         // Get published posts (public)
         // Filters: q, tagSlug, categorySlug; paging       
         #region Get all Post "PUBLIC"
+
         [AllowAnonymous]
         [HttpGet("published")]
         public async Task<ActionResult<PagedResponseDto<PostSummaryDto>>> GetPublished(
@@ -168,20 +169,25 @@ namespace BlogWebAPIApp.Controllers
             [FromQuery] int pageSize = 10,
             [FromQuery] string? q = null,
             [FromQuery(Name = "tag")] string? tagSlug = null,
-            [FromQuery(Name = "category")] string? categorySlug = null)
+            [FromQuery(Name = "category")] string? categorySlug = null,
+            [FromQuery] Guid? currentUserId = null
+        )
         {
-            if (page <= 0 || pageSize <= 0) return BadRequest(new { message = "page and pageSize must be positive" });
+            var (items, total) = await _posts.GetPublished(
+                page, pageSize, q, tagSlug, categorySlug, currentUserId
+            );
 
-            var (items, total) = await _posts.GetPublished(page, pageSize, q, tagSlug, categorySlug);
             var payload = new PagedResponseDto<PostSummaryDto>(
                 items.Select(p => p.ToSummaryDto()).ToList(),
-                total, page, pageSize);
+                total, page, pageSize
+            );
 
             return Ok(payload);
         }
+
         #endregion
 
-        
+
         // Get a single post by slug
         // Enforces visibility rules:
         //   - Draft/Archived: only author
@@ -225,25 +231,32 @@ namespace BlogWebAPIApp.Controllers
         }
         #endregion
 
-        
-        // Local visibility guard       
-        private static bool CanView(Post post, Guid? currentUserId)
-        {
-            var isAuthor = currentUserId.HasValue && post.AuthorId == currentUserId.Value;
 
-            // Draft/Archived hidden except to author
+
+        // ---- VISIBILITY CHECK ----
+        private bool CanView(Post post, Guid? viewerId)
+        {
+            var isAuthor = viewerId.HasValue && viewerId.Value == post.AuthorId;
+
+            // Draft / archived → only author
             if (post.Status != PostStatus.Published)
                 return isAuthor;
 
-            // Published flow
             return post.Visibility switch
             {
                 Visibility.Public => true,
-                Visibility.Private => isAuthor,
-                Visibility.Restricted => isAuthor || (currentUserId.HasValue && post.Audience.Any(a => a.UserId == currentUserId.Value)),
+
+                Visibility.Private =>
+                    isAuthor ||
+                    (
+                        viewerId.HasValue &&
+                        post.Author.Followers.Any(f => f.FollowerId == viewerId.Value)
+                    ),
+
                 _ => false
             };
         }
+
     }
 
 }

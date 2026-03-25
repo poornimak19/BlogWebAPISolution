@@ -25,4 +25,11 @@ namespace BlogWebAPIApp.Models.DTOs
         public string? AvatarUrl { get; set; }
     }
 
+    public class UserSearchDto
+    {
+        public Guid Id { get; set; }
+        public string Username { get; set; } = default!;
+        public string? DisplayName { get; set; }
+        public string? AvatarUrl { get; set; }
+    }
 }

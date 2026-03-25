@@ -42,5 +42,14 @@ namespace BlogWebAPIApp.Services
             var following = await _follows.GetQueryable().CountAsync(f => f.FollowerId == userId);
             return (followers, following);
         }
+
+        public async Task<IEnumerable<User>> SearchUsers(string query)
+        {
+            return await _users.GetQueryable()
+                .Where(u => u.Username.Contains(query) ||
+                            (u.DisplayName != null && u.DisplayName.Contains(query)))
+                .Take(20)
+                .ToListAsync();
+        }
     }
 }

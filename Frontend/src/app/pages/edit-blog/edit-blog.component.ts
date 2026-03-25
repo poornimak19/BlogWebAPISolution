@@ -18,7 +18,7 @@ export class EditBlogComponent implements OnInit {
   readonly route       = inject(ActivatedRoute);
   readonly router      = inject(Router);
   readonly postSvc     = inject(PostService);
-  readonly taxonomySvc = inject(TaxonomyService);
+  readonly taxonomySvc = inject(TaxonomyService);  
   readonly toast       = inject(ToastService);
 
   post       = signal<PostDetailDto | null>(null);
@@ -57,11 +57,15 @@ export class EditBlogComponent implements OnInit {
         this.form.autoApprove       = p.autoApproveComments;
         this.html.set(p.contentHtml);
         this.loading.set(false);
+
+      
+
         setTimeout(() => { const el = document.getElementById('rte-edit'); if (el && !el.innerHTML) el.innerHTML = p.contentHtml; }, 80);
       },
       error: () => this.loading.set(false)
     });
   }
+
 
   autoResize(e: Event): void { const el = e.target as HTMLTextAreaElement; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
   onInput(e: Event): void { this.html.set((e.target as HTMLElement).innerHTML); }
@@ -104,6 +108,7 @@ export class EditBlogComponent implements OnInit {
       categoryNames: this.form.categoryNames,
       commentsEnabled: this.form.commentsEnabled,
       autoApproveComments: this.form.autoApprove,
+      coverImageUrl :this.form.coverImageUrl,
       status
     }).subscribe({
       next: p => { this.toast.success('Story updated!'); this.saving.set(false); this.router.navigate(['/blog', p.slug]); },

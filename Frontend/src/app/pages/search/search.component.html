@@ -1,35 +1,56 @@
+
 <div class="search-page">
   <div class="search-hero">
     <div class="search-hero-inner">
       <h1 class="search-heading">Explore Stories</h1>
+
       <div class="search-bar-wrap">
-        <svg class="sb-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        <svg class="sb-icon" width="20" height="20" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
         </svg>
-        <input type="search" [(ngModel)]="query" placeholder="Search by title or content…"
-          class="search-bar" (keyup.enter)="doSearch()" autocomplete="off"/>
-        @if (query) { <button class="sb-clear" (click)="query=''; doSearch()" type="button" aria-label="Clear"></button> }
+
+        <input
+          type="search"
+          [(ngModel)]="query"
+          placeholder="Search by title or content…"
+          class="search-bar"
+          (keyup.enter)="doSearch()"
+          autocomplete="off"/>
+
+        @if (query) {
+          <button class="sb-clear" (click)="query=''; doSearch()" type="button"></button>
+        }
+
         <button class="sb-go" (click)="doSearch()" type="button">Search</button>
       </div>
     </div>
   </div>
 
   <div class="search-body">
-    <aside class="search-filters">
 
+    <!-- LEFT FILTER SIDEBAR (unchanged) -->
+    <aside class="search-filters">
       <div class="filter-group">
         <h4 class="filter-title">Sort by</h4>
-        <label class="radio-lbl"><input type="radio" [(ngModel)]="sort" value="recent"  name="sort" (change)="doSearch()"/><span>Most Recent</span></label>
-        <label class="radio-lbl"><input type="radio" [(ngModel)]="sort" value="popular" name="sort" (change)="doSearch()"/><span>Most Popular</span></label>
+        <label class="radio-lbl">
+          <input type="radio" [(ngModel)]="sort" value="recent" name="sort" (change)="doSearch()"/>
+          <span>Most Recent</span>
+        </label>
+        <label class="radio-lbl">
+          <input type="radio" [(ngModel)]="sort" value="popular" name="sort" (change)="doSearch()"/>
+          <span>Most Popular</span>
+        </label>
       </div>
 
-      <!-- Tags – multi-select -->
+      <!-- Tags -->
       <div class="filter-group">
-        <h4 class="filter-title">Tags <span class="multi-hint"></span></h4>
+        <h4 class="filter-title">Tags</h4>
         <div class="filter-chips">
           @for (tag of tags(); track tag.id) {
-            <button class="fc" [class.fc--on]="selectedTags().includes(tag.slug)"
-              (click)="toggleTag(tag.slug)" type="button">
+            <button class="fc"
+              [class.fc--on]="selectedTags().includes(tag.slug)"
+              (click)="toggleTag(tag.slug)">
               @if (selectedTags().includes(tag.slug)) { <span class="fc-check">✓</span> }
               {{ tag.name }}
             </button>
@@ -37,13 +58,14 @@
         </div>
       </div>
 
-      <!-- Categories – multi-select -->
+      <!-- Categories -->
       <div class="filter-group">
-        <h4 class="filter-title">Categories <span class="multi-hint"></span></h4>
+        <h4 class="filter-title">Categories</h4>
         <div class="filter-chips">
           @for (cat of categories(); track cat.id) {
-            <button class="fc fc--cat" [class.fc--on]="selectedCats().includes(cat.slug)"
-              (click)="toggleCat(cat.slug)" type="button">
+            <button class="fc fc--cat"
+              [class.fc--on]="selectedCats().includes(cat.slug)"
+              (click)="toggleCat(cat.slug)">
               @if (selectedCats().includes(cat.slug)) { <span class="fc-check">✓</span> }
               {{ cat.name }}
             </button>
@@ -51,14 +73,20 @@
         </div>
       </div>
 
-      <!-- Active pills -->
       @if (hasFilters()) {
         <div class="active-filter-pills">
           @for (s of selectedTags(); track s) {
-            <span class="afp">{{ s }}<button class="afp-x" (click)="removeTag(s)" type="button">×</button></span>
+            <span class="afp">
+              {{ s }}
+              <button class="afp-x" (click)="removeTag(s)" type="button">×</button>
+            </span>
           }
+
           @for (s of selectedCats(); track s) {
-            <span class="afp afp--cat">{{ s }}<button class="afp-x" (click)="removeCat(s)" type="button">×</button></span>
+            <span class="afp afp--cat">
+              {{ s }}
+              <button class="afp-x" (click)="removeCat(s)" type="button">×</button>
+            </span>
           }
         </div>
       }
@@ -66,50 +94,93 @@
       <button class="btn-reset" (click)="reset()" type="button">Reset all filters</button>
     </aside>
 
+    <!-- RESULTS SECTION -->
     <div class="search-results">
       @if (hasSearched() || hasFilters()) {
         <div class="results-meta">
-          <span class="results-count">{{ total() }} result{{ total()!==1?'s':'' }}</span>
-          @if (query) { <span> for "<strong>{{ query }}</strong>"</span> }
+          <span class="results-count">
+            {{ total() }} result{{ total()!==1?'s':'' }}
+          </span>
+
+          @if (query) {
+            <span> for "<strong>{{ query }}</strong>"</span>
+          }
         </div>
       }
 
+      <!-- LOADING -->
       @if (loading()) {
         <div class="results-grid">
           @for (s of skeletons; track $index) {
-            <div class="sk-card"><div class="sk-img"></div><div class="sk-line sk-title"></div><div class="sk-line sk-sub"></div></div>
+            <div class="sk-card">
+              <div class="sk-img"></div>
+              <div class="sk-line sk-title"></div>
+              <div class="sk-line sk-sub"></div>
+            </div>
           }
         </div>
-      } @else if (posts().length > 0) {
+      }
+
+      <!-- POSTS -->
+      @else if (posts().length > 0) {
         <div class="results-grid">
-          @for (post of posts(); track post.id) { <app-post-card [post]="post"/> }
+
+          @for (post of posts(); track post.id) {
+            <div class="post-wrapper">
+              
+          
+
+              <!-- Your post-card component -->
+              <app-post-card [post]="post"></app-post-card>
+
+            </div>
+          }
+
         </div>
 
-        <!-- Numbered pagination -->
+        <!-- PAGINATION -->
         @if (totalPages() > 1) {
           <nav class="pagination">
-            <button class="pg-btn pg-btn--arrow" [disabled]="page()===1" (click)="goTo(1)" title="First">«</button>
+            <button class="pg-btn pg-btn--arrow" [disabled]="page()===1" (click)="goTo(1)">«</button>
             <button class="pg-btn pg-btn--arrow" [disabled]="page()===1" (click)="goTo(page()-1)">‹ Prev</button>
+
             @if (pageNumbers()[0] > 1) {
               <button class="pg-btn" (click)="goTo(1)">1</button>
               @if (pageNumbers()[0] > 2) { <span class="pg-ellipsis">…</span> }
             }
+
             @for (p of pageNumbers(); track p) {
-              <button class="pg-btn" [class.pg-btn--on]="p===page()" (click)="goTo(p)">{{ p }}</button>
+              <button class="pg-btn" [class.pg-btn--on]="p === page()" (click)="goTo(p)">{{ p }}</button>
             }
-            @if (pageNumbers()[pageNumbers().length-1] < totalPages()) {
-              @if (pageNumbers()[pageNumbers().length-1] < totalPages()-1) { <span class="pg-ellipsis">…</span> }
+
+            @if (pageNumbers()[pageNumbers().length - 1] < totalPages()) {
+              @if (pageNumbers()[pageNumbers().length - 1] < totalPages() - 1) {
+                <span class="pg-ellipsis">…</span>
+              }
               <button class="pg-btn" (click)="goTo(totalPages())">{{ totalPages() }}</button>
             }
+
             <button class="pg-btn pg-btn--arrow" [disabled]="page()===totalPages()" (click)="goTo(page()+1)">Next ›</button>
-            <button class="pg-btn pg-btn--arrow" [disabled]="page()===totalPages()" (click)="goTo(totalPages())" title="Last">»</button>
+            <button class="pg-btn pg-btn--arrow" [disabled]="page()===totalPages()" (click)="goTo(totalPages())">»</button>
           </nav>
+
           <p class="pg-info">Page {{ page() }} of {{ totalPages() }}</p>
         }
-      } @else if (hasSearched()) {
-        <div class="no-results"><div class="nr-icon">🔍</div><h3>No stories found</h3><p>Try different keywords or adjust your filters.</p></div>
-      } @else {
-        <div class="search-hint"><div class="hint-icon">✨</div><p>Search above or use the filters to explore by tag or category. You can select multiple tags and categories.</p></div>
+      }
+
+      @else if (hasSearched()) {
+        <div class="no-results">
+          <div class="nr-icon">🔍</div>
+          <h3>No stories found</h3>
+          <p>Try different keywords or adjust your filters.</p>
+        </div>
+      }
+
+      @else {
+        <div class="search-hint">
+          <div class="hint-icon">✨</div>
+          <p>Search above or filter by tags & categories.</p>
+        </div>
       }
     </div>
   </div>

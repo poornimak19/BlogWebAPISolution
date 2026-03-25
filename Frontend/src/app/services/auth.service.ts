@@ -33,6 +33,7 @@ export class AuthService {
   login(dto: LoginRequestDto): Observable<AuthResponseDto> {
     return this.http.post<AuthResponseDto>(`${this.base}/login`, dto)
       .pipe(tap(r => this._onAuth(r)), catchError(e => throwError(() => e)));
+      
   }
 
   private _onAuth(res: AuthResponseDto): void {
@@ -40,12 +41,27 @@ export class AuthService {
     this.fetchMe().subscribe();
   }
 
-  fetchMe(): Observable<MeResponseDto> {
+  
+fetchMe(): Observable<MeResponseDto> {
     return this.http.get<MeResponseDto>(`${this.base}/me`).pipe(
-      tap(u => { this._user.set(u); localStorage.setItem('user', JSON.stringify(u)); }),
-      catchError(e => { this._clear(); return throwError(() => e); })
+      tap(u => {
+        this._user.set(u);
+
+        // ✅ Save entire user object
+        localStorage.setItem('user', JSON.stringify(u));
+
+        // ✅ Save userId for backend access control (followers-only private)
+        if (u?.id) {
+          localStorage.setItem('userId', u.id);
+        }
+      }),
+      catchError(e => {
+        this._clear();
+        return throwError(() => e);
+      })
     );
   }
+
 
   forgotPassword(dto: ForgotPasswordRequestDto): Observable<any> {
     return this.http.post(`${this.base}/forgot-password`, dto);
@@ -61,6 +77,7 @@ export class AuthService {
   private _clear(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('userId')
     this._user.set(null);
   }
 }

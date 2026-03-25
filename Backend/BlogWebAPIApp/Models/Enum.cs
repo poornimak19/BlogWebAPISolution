@@ -8,7 +8,7 @@
         
         public enum PostStatus { Draft = 0, Published = 1, Archived = 2 }
 
-        public enum Visibility { Public = 0, Private = 1, Restricted = 2 }
+        public enum Visibility { Public = 0, Private = 1}
 
         public enum CommentStatus { Pending = 0, Approved = 1, Removed = 2 }
 

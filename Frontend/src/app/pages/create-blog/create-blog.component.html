@@ -46,12 +46,23 @@
         <div class="side-field">
           <label>Visibility</label>
           <select [(ngModel)]="form.visibility" name="vis" class="side-select">
-            <option value="Public">🌍 Public</option>
-            <option value="Private">🔒 Private</option>
-            <option value="Restricted">👥 Restricted</option>
+            <option value="Public">🌍 Public — anyone can read</option>
+            <option value="Private">🔒 Private — only followers can read</option>
+
           </select>
         </div>
-        <div class="side-field">
+
+        <!-- Private info box -->
+  
+@if (form.visibility === 'Private') {
+  <div class="vis-info vis-info--private">
+    <span class="vis-info-icon">🔒</span>
+    <p>Only your followers can read this post.</p>
+  </div>
+}
+
+
+         <div class="side-field">
           <label>Custom Slug <span class="opt">(optional)</span></label>
           <input type="text" [(ngModel)]="form.slug" name="slug" placeholder="my-post-slug" class="side-input"/>
         </div>
