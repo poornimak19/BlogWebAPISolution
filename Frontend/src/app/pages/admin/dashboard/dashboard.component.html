@@ -1,0 +1,147 @@
+<div class="admin-layout">
+  <app-admin-nav/>
+
+  <main class="admin-main">
+    <div class="admin-page-header">
+      <h1 class="admin-page-title">Dashboard</h1>
+      <p class="admin-page-sub">Overview of your platform</p>
+    </div>
+
+    @if (loading()) {
+      <div class="admin-sk-grid">
+        @for (s of [1,2,3,4,5,6]; track s) {
+          <div class="admin-sk-card"></div>
+        }
+      </div>
+    }
+
+    @if (!loading() && stats()) {
+      <!-- Stats grid -->
+      <div class="stats-grid">
+        <!-- Users -->
+        <div class="stat-card stat-card--blue">
+          <div class="stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <p class="stat-label">Total Users</p>
+            <p class="stat-value">{{ stats()!.totalUsers }}</p>
+            <p class="stat-sub">{{ stats()!.totalBloggers }} bloggers · {{ stats()!.totalReaders }} readers</p>
+          </div>
+        </div>
+
+        <!-- Posts -->
+        <div class="stat-card stat-card--green">
+          <div class="stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <p class="stat-label">Total Posts</p>
+            <p class="stat-value">{{ stats()!.totalPosts }}</p>
+            <p class="stat-sub">{{ stats()!.publishedPosts }} published · {{ stats()!.draftPosts }} drafts</p>
+          </div>
+        </div>
+
+        <!-- Pending Posts -->
+        <div class="stat-card" [class.stat-card--warning]="stats()!.pendingPosts > 0" [class.stat-card--neutral]="stats()!.pendingPosts === 0">
+          <div class="stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <p class="stat-label">Pending Posts</p>
+            <p class="stat-value">{{ stats()!.pendingPosts }}</p>
+            <p class="stat-sub">
+              @if (stats()!.pendingPosts > 0) { Needs review }
+              @else { All clear }
+            </p>
+          </div>
+          @if (stats()!.pendingPosts > 0) {
+            <a routerLink="/admin/posts" class="stat-action">Review →</a>
+          }
+        </div>
+
+        <!-- Comments -->
+        <div class="stat-card stat-card--purple">
+          <div class="stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <p class="stat-label">Comments</p>
+            <p class="stat-value">{{ stats()!.totalComments }}</p>
+            <p class="stat-sub">{{ stats()!.pendingComments }} pending</p>
+          </div>
+          @if (stats()!.pendingComments > 0) {
+            <a routerLink="/admin/comments" class="stat-action">Review →</a>
+          }
+        </div>
+
+        <!-- Tags -->
+        <div class="stat-card stat-card--neutral">
+          <div class="stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+              <line x1="7" y1="7" x2="7.01" y2="7"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <p class="stat-label">Tags</p>
+            <p class="stat-value">{{ stats()!.totalTags }}</p>
+            <p class="stat-sub">Active taxonomy</p>
+          </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="stat-card stat-card--neutral">
+          <div class="stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
+              <line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <p class="stat-label">Categories</p>
+            <p class="stat-value">{{ stats()!.totalCategories }}</p>
+            <p class="stat-sub">Active taxonomy</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick links -->
+      <div class="quick-links">
+        <h3 class="ql-title">Quick Actions</h3>
+        <div class="ql-grid">
+          <a routerLink="/admin/users" class="ql-card">
+            <span class="ql-icon">👥</span>
+            <span>Manage Users</span>
+          </a>
+          <a routerLink="/admin/posts" class="ql-card">
+            <span class="ql-icon">📝</span>
+            <span>Moderate Posts</span>
+          </a>
+          <a routerLink="/admin/comments" class="ql-card">
+            <span class="ql-icon">💬</span>
+            <span>Review Comments</span>
+          </a>
+          <a routerLink="/admin/taxonomy" class="ql-card">
+            <span class="ql-icon">🏷️</span>
+            <span>Tags & Categories</span>
+          </a>
+        </div>
+      </div>
+    }
+  </main>
+</div>

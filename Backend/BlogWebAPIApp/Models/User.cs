@@ -58,6 +58,9 @@ namespace BlogWebAPIApp.Models
 
         public UserSettings? Settings { get; set; }
 
-        
+        public bool IsSuspended { get; set; } = false;
+        public bool CanComment { get; set; } = true;
+
+
     }
 }

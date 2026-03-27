@@ -1,0 +1,136 @@
+<div class="admin-layout">
+  <app-admin-nav/>
+
+  <main class="admin-main">
+    <div class="admin-page-header">
+      <h1 class="admin-page-title">Tags & Categories</h1>
+      <p class="admin-page-sub">Manage your blog's taxonomy</p>
+    </div>
+
+    @if (loading()) {
+      <div class="tax-sk-grid">
+        <div class="admin-sk-card"></div>
+        <div class="admin-sk-card"></div>
+      </div>
+    } @else {
+      <div class="tax-grid">
+
+        <!-- ── Tags ── -->
+        <div class="tax-section">
+          <div class="tax-header">
+            <h2 class="tax-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                <line x1="7" y1="7" x2="7.01" y2="7"/>
+              </svg>
+              Tags <span class="tax-count">{{ tags().length }}</span>
+            </h2>
+          </div>
+
+          <!-- Create tag -->
+          <div class="create-row">
+            <input type="text" [(ngModel)]="newTagName" name="newTag"
+              placeholder="New tag name…" class="tax-input"
+              (keydown.enter)="createTag()"/>
+            <button class="btn-create" (click)="createTag()" [disabled]="!newTagName.trim()">
+              + Add
+            </button>
+          </div>
+
+          <!-- Tag list -->
+          <div class="tax-list">
+            @if (tags().length === 0) {
+              <p class="tax-empty">No tags yet.</p>
+            }
+            @for (tag of tags(); track tag.id) {
+              <div class="tax-item">
+                @if (renamingTag()?.id === tag.id) {
+                  <!-- Inline rename form -->
+                  <input type="text"
+                    [value]="renamingTag()!.name"
+                    (input)="renamingTag.set({ id: tag.id, name: $any($event.target).value })"
+                    class="tax-rename-input"
+                    (keydown.enter)="saveRenameTag()"
+                    (keydown.escape)="cancelRenameTag()"
+                    autofocus/>
+                  <div class="tax-item-actions">
+                    <button class="act-btn act-btn--success" (click)="saveRenameTag()">Save</button>
+                    <button class="act-btn act-btn--neutral" (click)="cancelRenameTag()">Cancel</button>
+                  </div>
+                } @else {
+                  <div class="tax-item-info">
+                    <span class="tax-chip">{{ tag.name }}</span>
+                    <span class="tax-slug">{{ tag.slug }}</span>
+                  </div>
+                  <div class="tax-item-actions">
+                    <button class="act-btn act-btn--neutral" (click)="startRenameTag(tag)">Rename</button>
+                    <button class="act-btn act-btn--danger"  (click)="deleteTag(tag)">Delete</button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- ── Categories ── -->
+        <div class="tax-section">
+          <div class="tax-header">
+            <h2 class="tax-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+                <line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
+                <line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+              Categories <span class="tax-count">{{ categories().length }}</span>
+            </h2>
+          </div>
+
+          <!-- Create category -->
+          <div class="create-row">
+            <input type="text" [(ngModel)]="newCatName" name="newCat"
+              placeholder="New category name…" class="tax-input"
+              (keydown.enter)="createCategory()"/>
+            <button class="btn-create" (click)="createCategory()" [disabled]="!newCatName.trim()">
+              + Add
+            </button>
+          </div>
+
+          <!-- Category list -->
+          <div class="tax-list">
+            @if (categories().length === 0) {
+              <p class="tax-empty">No categories yet.</p>
+            }
+            @for (cat of categories(); track cat.id) {
+              <div class="tax-item">
+                @if (renamingCat()?.id === cat.id) {
+                  <input type="text"
+                    [value]="renamingCat()!.name"
+                    (input)="renamingCat.set({ id: cat.id, name: $any($event.target).value })"
+                    class="tax-rename-input"
+                    (keydown.enter)="saveRenameCat()"
+                    (keydown.escape)="cancelRenameCat()"
+                    autofocus/>
+                  <div class="tax-item-actions">
+                    <button class="act-btn act-btn--success" (click)="saveRenameCat()">Save</button>
+                    <button class="act-btn act-btn--neutral" (click)="cancelRenameCat()">Cancel</button>
+                  </div>
+                } @else {
+                  <div class="tax-item-info">
+                    <span class="tax-chip tax-chip--cat">{{ cat.name }}</span>
+                    <span class="tax-slug">{{ cat.slug }}</span>
+                  </div>
+                  <div class="tax-item-actions">
+                    <button class="act-btn act-btn--neutral" (click)="startRenameCat(cat)">Rename</button>
+                    <button class="act-btn act-btn--danger"  (click)="deleteCategory(cat)">Delete</button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+      </div>
+    }
+  </main>
+</div>

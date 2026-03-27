@@ -184,6 +184,52 @@ namespace BlogWebAPIApp.Controllers
             }
         }
         #endregion
+
+
+        // ====================================
+        // ✅ ADMIN: Get pending comments
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpGet("admin/pending")]
+        public async Task<ActionResult<IEnumerable<CommentDto>>> GetPending(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            var (items, total) = await _comments.GetPendingComments(page, pageSize);
+
+            return Ok(new
+            {
+                total,
+                items = items.Select(c => c.ToDto())
+            });
+        }
+
+        // ====================================
+        // ✅ ADMIN: Approve a comment
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpPut("admin/{id:guid}/approve")]
+        public async Task<IActionResult> AdminApprove(Guid id)
+        {
+            await _comments.AdminApprove(id);
+            return Ok(new { message = "Comment approved" });
+        }
+
+        // ====================================
+        // ✅ ADMIN: Delete ANY comment
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("admin/{id:guid}")]
+        public async Task<IActionResult> AdminDelete(Guid id)
+        {
+            await _comments.AdminDelete(id);
+            return Ok(new { message = "Comment deleted by admin" });
+        }
+
+
     }
+
+
+
 
 }

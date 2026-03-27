@@ -1,0 +1,62 @@
+<div class="admin-layout">
+  <app-admin-nav/>
+
+  <main class="admin-main">
+    <div class="admin-page-header">
+      <h1 class="admin-page-title">Posts Moderation</h1>
+      <p class="admin-page-sub">{{ total() }} pending post{{ total() !== 1 ? 's' : '' }} awaiting review</p>
+    </div>
+
+    @if (loading()) {
+      <div class="admin-sk-table">
+        @for (s of [1,2,3,4,5]; track s) { <div class="admin-sk-row"></div> }
+      </div>
+    } @else if (posts().length === 0) {
+      <div class="admin-empty">
+        <div class="admin-empty-icon">✅</div>
+        <p>No pending posts. Everything is reviewed!</p>
+      </div>
+    } @else {
+      <div class="posts-list">
+        @for (post of posts(); track post.id) {
+          <div class="post-row" [class.post-row--rejected]="post.isRejected">
+
+            @if (post.coverImageUrl) {
+              <img [src]="post.coverImageUrl" alt="" class="post-thumb" (error)="$any($event.target).style.display='none'"/>
+            } @else {
+              <div class="post-thumb-placeholder">{{ post.title[0]?.toUpperCase() }}</div>
+            }
+
+            <div class="post-info">
+              <div class="post-meta-top">
+                <span class="badge {{ statusClass(post.status) }}">{{ post.status }}</span>
+                @if (post.isRejected) { <span class="badge badge--danger">Rejected</span> }
+                <span class="post-vis">{{ post.visibility }}</span>
+              </div>
+              <h3 class="post-title">{{ post.title }}</h3>
+              <div class="post-meta">
+                <span>by <strong>{{ post.author.displayName || post.author.username }}</strong></span>
+                <span class="meta-sep">·</span>
+                <span>{{ post.createdAt | date:'MMM d, y' }}</span>
+                @if (post.tags.length > 0) {
+                  <span class="meta-sep">·</span>
+                  @for (tag of post.tags.slice(0,3); track tag) {
+                    <span class="post-tag">{{ tag }}</span>
+                  }
+                }
+              </div>
+            </div>
+
+            <div class="post-actions">
+              <a [routerLink]="['/blog', post.slug]" class="act-btn act-btn--neutral" target="_blank">View</a>
+              <button class="act-btn act-btn--success" (click)="approve(post)">Approve</button>
+              <button class="act-btn act-btn--warning" (click)="reject(post)">Reject</button>
+              <button class="act-btn act-btn--danger"  (click)="deletePost(post)">Delete</button>
+            </div>
+
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>

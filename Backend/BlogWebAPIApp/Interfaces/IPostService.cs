@@ -59,5 +59,10 @@ namespace BlogWebAPIApp.Interfaces
             int page,
             int pageSize
         );
+
+        Task<(IReadOnlyList<Post> items, int total)> GetPendingPosts(int page, int pageSize);
+        Task ApprovePost(Guid postId);
+        Task RejectPost(Guid postId);
+        Task AdminDelete(Guid postId);
     }
 }

@@ -191,8 +191,8 @@ namespace BlogWebAPIApp.Controllers
         // Get a single post by slug
         // Enforces visibility rules:
         //   - Draft/Archived: only author
-        //   - Private: only author
-        //   - Restricted: author or allowed audience
+        //   - Private: only followers
+       
         //   - Public: anyone (if Published)
         #region GetPost by slug
         [AllowAnonymous]
@@ -255,6 +255,59 @@ namespace BlogWebAPIApp.Controllers
 
                 _ => false
             };
+        }
+
+
+        // ====================================
+        // ✅ ADMIN: Get all pending posts
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpGet("admin/pending")]
+        public async Task<ActionResult<PagedResponseDto<PostSummaryDto>>> GetPendingPosts(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            var (items, total) = await _posts.GetPendingPosts(page, pageSize);
+
+            var payload = new PagedResponseDto<PostSummaryDto>(
+                items.Select(p => p.ToSummaryDto()).ToList(),
+                total, page, pageSize
+            );
+
+            return Ok(payload);
+        }
+
+        // ====================================
+        // ✅ ADMIN: Approve post
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id:guid}/approve")]
+        public async Task<IActionResult> AdminApprove(Guid id)
+        {
+            await _posts.ApprovePost(id);
+            return Ok(new { message = "Post approved" });
+        }
+
+        // ====================================
+        // ✅ ADMIN: Reject post
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id:guid}/reject")]
+        public async Task<IActionResult> AdminReject(Guid id)
+        {
+            await _posts.RejectPost(id);
+            return Ok(new { message = "Post rejected" });
+        }
+
+        // ====================================
+        // ✅ ADMIN: Delete any post
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id:guid}/admin-delete")]
+        public async Task<IActionResult> AdminDelete(Guid id)
+        {
+            await _posts.AdminDelete(id);
+            return Ok(new { message = "Post deleted by admin" });
         }
 
     }

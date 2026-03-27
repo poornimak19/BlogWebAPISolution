@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, bloggerGuard } from './guards/auth.guard';
+import { authGuard, bloggerGuard, adminGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -36,6 +36,32 @@ export const routes: Routes = [
   {
     path: 'reset-password',
     loadComponent: () => import('./pages/reset-password/reset-password.component').then(m => m.ResetPasswordComponent)
+  },
+  // ── Admin routes (Admin only) ─────────────────────────────
+  {
+    path: 'admin',
+    canActivate: [authGuard, adminGuard],
+    loadComponent: () => import('./pages/admin/dashboard/dashboard.component').then(m => m.AdminDashboardComponent)
+  },
+  {
+    path: 'admin/users',
+    canActivate: [authGuard, adminGuard],
+    loadComponent: () => import('./pages/admin/users/users.component').then(m => m.AdminUsersComponent)
+  },
+  {
+    path: 'admin/posts',
+    canActivate: [authGuard, adminGuard],
+    loadComponent: () => import('./pages/admin/posts/posts.component').then(m => m.AdminPostsComponent)
+  },
+  {
+    path: 'admin/comments',
+    canActivate: [authGuard, adminGuard],
+    loadComponent: () => import('./pages/admin/comments/comments.component').then(m => m.AdminCommentsComponent)
+  },
+  {
+    path: 'admin/taxonomy',
+    canActivate: [authGuard, adminGuard],
+    loadComponent: () => import('./pages/admin/taxonomy/taxonomy.component').then(m => m.AdminTaxonomyComponent)
   },
   {
     path: '404',

@@ -26,6 +26,8 @@ namespace BlogWebAPIApp.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+        public bool IsDeleted { get; set; } = false;
+        public bool IsFlagged { get; set; } = false;  // optional
         public ICollection<CommentLike> Likes { get; set; } = new List<CommentLike>();
 
     }

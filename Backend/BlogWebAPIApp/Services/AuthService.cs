@@ -66,6 +66,11 @@ namespace BlogWebAPIApp.Services
             if (user == null)
                 throw new UnauthorizedAccessException("Invalid username or email.");
 
+            // ✅ BLOCK SUSPENDED USERS
+            if (user.IsSuspended)
+                throw new UnauthorizedAccessException("Your account has been suspended.");
+
+
             var computed = _passwords.HashPassword(password, user.PasswordHash, out _);
 
             var ok = user.Password.Length == computed.Length &&

@@ -33,6 +33,7 @@ namespace BlogWebAPIApp.Models
 
         public bool CommentsEnabled { get; set; } = true;
         public bool AutoApproveComments { get; set; } = true;
+        public bool IsRejected { get; set; } = false;
 
         // Scheduling removed
         public DateTime? PublishedAt { get; set; }

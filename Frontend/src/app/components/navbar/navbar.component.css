@@ -245,3 +245,24 @@
 @media (max-width: 640px) {
   .nav-search, .nav-username, .nav-guest { display: none; }
 }
+
+/* Admin nav link */
+.nav-link--admin {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff !important;
+  font-weight: 700;
+}
+.nav-link--admin:hover { opacity: 0.88; background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+
+/* Admin dropdown item */
+.dd-item--admin {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #6366f1 !important;
+  font-weight: 600;
+}
+[data-theme="dark"] .dd-item--admin { color: #a5b4fc !important; }

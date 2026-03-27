@@ -78,22 +78,70 @@ namespace BlogWebAPIApp.Controllers
         }
         #endregion
 
-        // SEARCH USERS
-        [Authorize]
-        [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<UserSearchDto>>> SearchUsers([FromQuery] string q)
+        // =======================
+        // ✅ ADMIN: Get ALL users
+        // =======================
+        [Authorize(Roles = "Admin")]
+        [HttpGet("admin/all")]
+        public async Task<ActionResult<IEnumerable<UserAdminDto>>> GetAllUsers()
         {
-            if (string.IsNullOrWhiteSpace(q))
-                return Ok(new List<UserSearchDto>());
+            var users = await _users.GetAllUsers();
 
-            var results = await _users.SearchUsers(q);
-            return Ok(results.Select(u => new UserSearchDto
+            return Ok(users.Select(u => new UserAdminDto
             {
                 Id = u.Id,
                 Username = u.Username,
+                Email = u.Email,
+                Role = u.Role.ToString(),
                 DisplayName = u.DisplayName,
-                AvatarUrl = u.AvatarUrl
+                IsSuspended = u.IsSuspended,
+                CanComment = u.CanComment,
+                CreatedAt = u.CreatedAt
             }));
+        }
+
+        // ====================================
+        // ✅ ADMIN: Change user role
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpPut("admin/{id:guid}/role")]
+        public async Task<IActionResult> ChangeRole(Guid id, [FromBody] ChangeRoleDto dto)
+        {
+            await _users.ChangeRole(id, dto.Role);
+            return Ok(new { message = "Role updated" });
+        }
+
+        // ====================================
+        // ✅ ADMIN: Suspend / Unsuspend user
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpPut("admin/{id:guid}/suspend")]
+        public async Task<IActionResult> SuspendUser(Guid id, [FromBody] SuspendUserDto dto)
+        {
+            await _users.SuspendUser(id, dto.Suspend);
+            return Ok(new { message = dto.Suspend ? "User suspended" : "User unsuspended" });
+        }
+
+        // ====================================
+        // ✅ ADMIN: Ban user from commenting
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpPut("admin/{id:guid}/comment-ban")]
+        public async Task<IActionResult> CommentBan(Guid id, [FromBody] CommentBanDto dto)
+        {
+            await _users.SetCommentPermission(id, dto.CanComment);
+            return Ok(new { message = dto.CanComment ? "Commenting allowed" : "Commenting disabled" });
+        }
+
+        // ====================================
+        // ✅ ADMIN: DELETE user
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("admin/{id:guid}")]
+        public async Task<IActionResult> AdminDeleteUser(Guid id)
+        {
+            await _users.DeleteUser(id);
+            return Ok(new { message = "User deleted" });
         }
     }
 

@@ -334,5 +334,53 @@ namespace BlogWebAPIApp.Services
 
             return s.Trim('-');
         }
+
+        public async Task<(IReadOnlyList<Post> items, int total)> GetPendingPosts(int page, int pageSize)
+        {
+            var query = _posts.GetQueryable()
+                .Where(p => p.Status == PostStatus.Draft && p.IsRejected == false)
+                .OrderByDescending(p => p.CreatedAt);
+
+            var total = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize)
+                                   .Take(pageSize)
+                                   .Include(p => p.Author)
+                                   .ToListAsync();
+
+            return (items, total);
+        }
+
+        public async Task ApprovePost(Guid postId)
+        {
+            var post = await _posts.Get(postId)
+                ?? throw new InvalidOperationException("Post not found");
+
+            post.Status = PostStatus.Published;
+            post.IsRejected = false;
+            post.PublishedAt = DateTime.UtcNow;
+
+            await _posts.SaveChangesAsync();
+        }
+
+        public async Task RejectPost(Guid postId)
+        {
+            var post = await _posts.Get(postId)
+                ?? throw new InvalidOperationException("Post not found");
+
+            post.IsRejected = true;
+            post.Status = PostStatus.Draft;
+
+            await _posts.SaveChangesAsync();
+        }
+
+    
+
+        public async Task AdminDelete(Guid postId)
+        {
+            var post = await _posts.Get(postId)
+                ?? throw new InvalidOperationException("Post not found");
+
+            await _posts.Delete(postId);
+        }
     }
 }

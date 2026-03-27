@@ -13,16 +13,27 @@ namespace BlogWebAPIApp.Services
     {
         private readonly IRepository<Guid, Post> _posts;
         private readonly IRepository<Guid, Comment> _comments;
+        private readonly IRepository<Guid, User> _users;
 
-        public CommentService(IRepository<Guid, Post> posts,
-                              IRepository<Guid, Comment> comments)
+        public CommentService(
+    IRepository<Guid, Post> posts,
+    IRepository<Guid, Comment> comments,
+    IRepository<Guid, User> users)
         {
             _posts = posts;
             _comments = comments;
+            _users = users;
         }
 
         public async Task<Comment> Add(Guid postId, Guid authorId, string content, Guid? parentCommentId)
         {
+            var author = await _users.Get(authorId)
+    ?? throw new InvalidOperationException("User not found");
+
+            // ✅ Block commenting if banned
+            if (!author.CanComment)
+                throw new InvalidOperationException("You are banned from commenting.");
+
             var post = await _posts.Get(postId) ?? throw new EntityNotFoundException("Post");
             if (!post.CommentsEnabled) throw new InvalidOperationException("Comments disabled for this post");
 
@@ -119,6 +130,42 @@ namespace BlogWebAPIApp.Services
                                          .ToListAsync();
 
             return (items, total);
+        }
+
+        public async Task<(IReadOnlyList<Comment> items, int total)> GetPendingComments(int page, int pageSize)
+        {
+            var query = _comments.GetQueryable()
+                .Include(c => c.Author)
+                .Include(c => c.Post)
+                .Where(c => c.Status == CommentStatus.Pending && c.IsDeleted == false);
+
+            var total = await query.CountAsync();
+            var items = await query.OrderBy(c => c.CreatedAt)
+                                   .Skip((page - 1) * pageSize)
+                                   .Take(pageSize)
+                                   .ToListAsync();
+
+            return (items, total);
+        }
+
+        public async Task AdminApprove(Guid commentId)
+        {
+            var comment = await _comments.Get(commentId)
+                ?? throw new EntityNotFoundException("Comment");
+
+            comment.Status = CommentStatus.Approved;
+            await _comments.SaveChangesAsync();
+        }
+
+        public async Task AdminDelete(Guid commentId)
+        {
+            var comment = await _comments.Get(commentId)
+                ?? throw new EntityNotFoundException("Comment");
+
+            comment.IsDeleted = true;
+            comment.Status = CommentStatus.Removed;
+
+            await _comments.SaveChangesAsync();
         }
     }
 }

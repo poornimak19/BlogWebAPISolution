@@ -3,6 +3,8 @@ using BlogWebAPIApp.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using static BlogWebAPIApp.Models.Enum;
 
 namespace BlogWebAPIApp.Services
 {
@@ -51,5 +53,52 @@ namespace BlogWebAPIApp.Services
                 .Take(20)
                 .ToListAsync();
         }
+
+        public async Task<List<User>> GetAllUsers()
+        {
+            return await _users.GetQueryable()
+                .Include(u => u.Posts)
+                .Include(u => u.Followers)
+                .Include(u => u.Following)
+                .OrderByDescending(u => u.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task ChangeRole(Guid userId, UserRole newRole)
+        {
+            var user = await _users.Get(userId)
+                ?? throw new InvalidOperationException("User not found");
+
+            user.Role = newRole;
+            await _users.SaveChangesAsync();
+        }
+
+        public async Task SuspendUser(Guid userId, bool suspend)
+        {
+            var user = await _users.Get(userId)
+                ?? throw new InvalidOperationException("User not found");
+
+            user.IsSuspended = suspend;
+            await _users.SaveChangesAsync();
+        }
+
+        public async Task DeleteUser(Guid userId)
+        {
+            var user = await _users.Get(userId)
+                ?? throw new InvalidOperationException("User not found");
+
+            await _users.Delete(userId);
+        }
+
+        public async Task SetCommentPermission(Guid userId, bool canComment)
+        {
+            var user = await _users.Get(userId)
+                ?? throw new InvalidOperationException("User not found");
+
+            user.CanComment = canComment;
+            await _users.SaveChangesAsync();
+        }
+
+       
     }
 }

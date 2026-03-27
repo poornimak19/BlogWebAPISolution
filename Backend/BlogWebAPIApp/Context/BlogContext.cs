@@ -233,8 +233,31 @@ namespace BlogWebAPIApp.Context
 
                 e.HasIndex(r => new { r.Status, r.CreatedAt });
             });
-        }
 
+
+            // User admin fields
+            b.Entity<User>()
+                .Property(u => u.IsSuspended)
+                .HasDefaultValue(false);
+
+            b.Entity<User>()
+                .Property(u => u.CanComment)
+                .HasDefaultValue(true);
+
+            // Post admin field
+            b.Entity<Post>()
+                .Property(p => p.IsRejected)
+                .HasDefaultValue(false);
+
+            // Comment moderation fields
+            b.Entity<Comment>()
+                .Property(c => c.IsDeleted)
+                .HasDefaultValue(false);
+
+            b.Entity<Comment>()
+                .Property(c => c.IsFlagged)
+                .HasDefaultValue(false);
+        }
 
     }
 }

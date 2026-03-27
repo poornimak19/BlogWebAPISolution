@@ -66,6 +66,51 @@ namespace BlogWebAPIApp.Controllers
             return Ok(category.ToDto());
         }
         #endregion
+
+
+        // ====================================
+        // ✅ ADMIN: Rename tag
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpPut("tags/{id:int}/rename")]
+        public async Task<IActionResult> RenameTag(int id, [FromBody] RenameDto dto)
+        {
+            var tag = await _taxonomy.RenameTag(id, dto.Name);
+            return Ok(tag.ToDto());
+        }
+
+        // ====================================
+        // ✅ ADMIN: Delete tag
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("tags/{id:int}")]
+        public async Task<IActionResult> DeleteTag(int id)
+        {
+            await _taxonomy.DeleteTag(id);
+            return Ok(new { message = "Tag deleted" });
+        }
+
+        // ====================================
+        // ✅ ADMIN: Rename category
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpPut("categories/{id:int}/rename")]
+        public async Task<IActionResult> RenameCategory(int id, [FromBody] RenameDto dto)
+        {
+            var cat = await _taxonomy.RenameCategory(id, dto.Name);
+            return Ok(cat.ToDto());
+        }
+
+        // ====================================
+        // ✅ ADMIN: Delete category
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("categories/{id:int}")]
+        public async Task<IActionResult> DeleteCategory(int id)
+        {
+            await _taxonomy.DeleteCategory(id);
+            return Ok(new { message = "Category deleted" });
+        }
     }
 
 }

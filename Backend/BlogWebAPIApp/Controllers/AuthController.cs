@@ -3,9 +3,10 @@ using BlogWebAPIApp.Interfaces;
 using BlogWebAPIApp.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using System;
+using static BlogWebAPIApp.Models.Enum;
 
 namespace BlogWebAPIApp.Controllers
 {
@@ -26,6 +27,10 @@ namespace BlogWebAPIApp.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto dto)
         {
+            if (dto.Role == UserRole.Admin && !User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
             try
             {
