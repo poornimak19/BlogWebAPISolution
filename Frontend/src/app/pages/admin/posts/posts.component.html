@@ -48,9 +48,9 @@
             </div>
 
             <div class="post-actions">
-              <a [routerLink]="['/blog', post.slug]" class="act-btn act-btn--neutral" target="_blank">View</a>
+              <button class="act-btn act-btn--neutral" (click)="openPreview(post)">Preview</button>
               <button class="act-btn act-btn--success" (click)="approve(post)">Approve</button>
-              <button class="act-btn act-btn--warning" (click)="reject(post)">Reject</button>
+              <!-- <button class="act-btn act-btn--warning" (click)="reject(post)">Reject</button> -->
               <button class="act-btn act-btn--danger"  (click)="deletePost(post)">Delete</button>
             </div>
 
@@ -60,3 +60,38 @@
     }
   </main>
 </div>
+
+<!-- Preview Modal -->
+@if (previewPost() || previewLoading()) {
+  <div class="preview-backdrop" (click)="closePreview()">
+    <div class="preview-modal" (click)="$event.stopPropagation()">
+
+      <button class="preview-close" (click)="closePreview()">✕</button>
+
+      @if (previewLoading()) {
+        <div class="preview-loading">Loading preview…</div>
+      } @else if (previewPost(); as p) {
+
+        @if (p.coverImageUrl) {
+          <img [src]="p.coverImageUrl" alt="" class="preview-cover"/>
+        }
+
+        <div class="preview-body">
+          <div class="preview-meta">
+            <span>by <strong>{{ p.author.displayName || p.author.username }}</strong></span>
+            <span class="meta-sep">·</span>
+            <span>{{ p.createdAt | date:'MMM d, y' }}</span>
+            @if (p.tags.length) {
+              <span class="meta-sep">·</span>
+              @for (tag of p.tags; track tag) { <span class="post-tag">{{ tag }}</span> }
+            }
+          </div>
+          <h2 class="preview-title">{{ p.title }}</h2>
+          @if (p.excerpt) { <p class="preview-excerpt">{{ p.excerpt }}</p> }
+          <div class="preview-content" [innerHTML]="p.contentHtml"></div>
+        </div>
+
+      }
+    </div>
+  </div>
+}

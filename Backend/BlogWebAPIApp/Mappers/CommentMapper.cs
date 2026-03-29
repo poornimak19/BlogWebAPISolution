@@ -19,7 +19,8 @@ namespace BlogWebAPIApp.Mappers
                 Status: c.Status.ToString(),
                 CreatedAt: c.CreatedAt,
                 UpdatedAt: c.UpdatedAt,
-                RepliesCount: repliesCount
+                RepliesCount: repliesCount,
+                PostTitle: c.Post?.Title
             );
     }
 

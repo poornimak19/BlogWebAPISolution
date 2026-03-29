@@ -43,7 +43,8 @@ namespace BlogWebAPIApp.Models.DTOs
         string Status,
         DateTime CreatedAt,
         DateTime UpdatedAt,
-        int RepliesCount // we return top-level comments and tell how many replies exist
+        int RepliesCount,
+        string? PostTitle
     );
 }
 

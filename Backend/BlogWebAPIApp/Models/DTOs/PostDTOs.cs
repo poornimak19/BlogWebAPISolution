@@ -74,6 +74,7 @@ namespace BlogWebAPIApp.Models.DTOs
         string? CoverImageUrl,
         string Status,
         string Visibility,
+        bool IsRejected,
         DateTime? PublishedAt,
         DateTime CreatedAt,
         DateTime UpdatedAt,

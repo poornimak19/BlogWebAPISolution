@@ -167,5 +167,13 @@ namespace BlogWebAPIApp.Services
 
             await _comments.SaveChangesAsync();
         }
+
+        public async Task<(int total, int pending)> GetCommentStats()
+        {
+            var q = _comments.GetQueryable().Where(c => c.IsDeleted == false);
+            var total   = await q.CountAsync();
+            var pending = await q.CountAsync(c => c.Status == CommentStatus.Pending);
+            return (total, pending);
+        }
     }
 }

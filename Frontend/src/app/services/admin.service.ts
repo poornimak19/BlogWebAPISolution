@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, catchError, forkJoin, map, throwError } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { UserAdminDto, AdminStatsDto, AdminPostDto, AdminCommentDto } from '../models/admin.models';
 import { TagDto, CategoryDto } from '../models/blog.models';
@@ -14,12 +14,13 @@ export class AdminService {
 
   // ── Stats: derived from parallel calls ────────────────────
   getStats(): Observable<AdminStatsDto> {
+    const safe = <T>(obs: Observable<T>, fallback: T) => obs.pipe(catchError(e => { console.error(e); return of(fallback); }));
     return forkJoin({
-      users:      this.getAllUsers(),
-      posts:      this.getPendingPosts(1, 1),
-      comments:   this.getPendingComments(1, 1),
-      tags:       this.getTags(),
-      categories: this.getCategories()
+      users:        safe(this.getAllUsers(), [] as UserAdminDto[]),
+      postStats:    safe(this.http.get<{ total: number; published: number; draft: number; pending: number }>(`${this.base}/posts/admin/stats`), { total: 0, published: 0, draft: 0, pending: 0 }),
+      commentStats: safe(this.http.get<{ total: number; pending: number }>(`${this.base}/admin/comments/stats`), { total: 0, pending: 0 }),
+      tags:         safe(this.getTags(), [] as TagDto[]),
+      categories:   safe(this.getCategories(), [] as CategoryDto[])
     }).pipe(
       map(r => {
         const users = r.users;
@@ -28,12 +29,12 @@ export class AdminService {
           totalBloggers:   users.filter(u => u.role === 'Blogger').length,
           totalReaders:    users.filter(u => u.role === 'Reader').length,
           totalAdmins:     users.filter(u => u.role === 'Admin').length,
-          totalPosts:      0,
-          publishedPosts:  0,
-          draftPosts:      0,
-          pendingPosts:    r.posts.total,
-          totalComments:   0,
-          pendingComments: r.comments.total,
+          totalPosts:      r.postStats.total,
+          publishedPosts:  r.postStats.published,
+          draftPosts:      r.postStats.draft,
+          pendingPosts:    r.postStats.pending,
+          totalComments:   r.commentStats.total,
+          pendingComments: r.commentStats.pending,
           totalTags:       r.tags.length,
           totalCategories: r.categories.length
         } as AdminStatsDto;

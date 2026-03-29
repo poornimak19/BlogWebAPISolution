@@ -18,6 +18,7 @@ namespace BlogWebAPIApp.Mappers
                 p.CoverImageUrl,
                 p.Status.ToString(),
                 p.Visibility.ToString(),
+                p.IsRejected,
                 p.PublishedAt,
                 p.CreatedAt,
                 p.UpdatedAt,

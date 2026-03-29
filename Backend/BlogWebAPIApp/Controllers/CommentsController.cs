@@ -226,6 +226,17 @@ namespace BlogWebAPIApp.Controllers
             return Ok(new { message = "Comment deleted by admin" });
         }
 
+        // ====================================
+        // ✅ ADMIN: Get comment stats
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpGet("admin/comments/stats")]
+        public async Task<IActionResult> GetCommentStats()
+        {
+            var (total, pending) = await _comments.GetCommentStats();
+            return Ok(new { total, pending });
+        }
+
 
     }
 

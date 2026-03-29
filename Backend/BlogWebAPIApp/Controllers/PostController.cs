@@ -203,7 +203,8 @@ namespace BlogWebAPIApp.Controllers
             if (post == null) return NotFound(new { message = "Post Not Found.Enter the correct Tag name " });
 
             var currentUserId = User.GetUserId();
-            if (!CanView(post, currentUserId))
+            var isAdmin = User.IsInRole("Admin");
+            if (!CanView(post, currentUserId, isAdmin))
                 return NotFound(); // avoid leaking existence
 
             return Ok(post.ToDetailDto());
@@ -234,8 +235,10 @@ namespace BlogWebAPIApp.Controllers
 
 
         // ---- VISIBILITY CHECK ----
-        private bool CanView(Post post, Guid? viewerId)
+        private bool CanView(Post post, Guid? viewerId, bool isAdmin = false)
         {
+            if (isAdmin) return true;
+
             var isAuthor = viewerId.HasValue && viewerId.Value == post.AuthorId;
 
             // Draft / archived → only author
@@ -308,6 +311,17 @@ namespace BlogWebAPIApp.Controllers
         {
             await _posts.AdminDelete(id);
             return Ok(new { message = "Post deleted by admin" });
+        }
+
+        // ====================================
+        // ✅ ADMIN: Get post stats
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpGet("admin/stats")]
+        public async Task<IActionResult> GetAdminStats()
+        {
+            var (total, published, draft, pending) = await _posts.GetPostStats();
+            return Ok(new { total, published, draft, pending });
         }
 
     }

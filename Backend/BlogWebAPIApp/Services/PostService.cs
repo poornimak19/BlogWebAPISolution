@@ -228,8 +228,9 @@ namespace BlogWebAPIApp.Services
             if (post.AuthorId != actorUserId)
                 throw new UnAuthorizedException("Not author");
 
-            post.Status = PostStatus.Published;
-            post.PublishedAt = DateTime.UtcNow;
+            // Submit for admin review — admin must approve before it goes live
+            post.Status = PostStatus.Draft;
+            post.IsRejected = false;
             post.UpdatedAt = DateTime.UtcNow;
 
             await _posts.SaveChangesAsync();
@@ -381,6 +382,16 @@ namespace BlogWebAPIApp.Services
                 ?? throw new InvalidOperationException("Post not found");
 
             await _posts.Delete(postId);
+        }
+
+        public async Task<(int total, int published, int draft, int pending)> GetPostStats()
+        {
+            var q = _posts.GetQueryable();
+            var total     = await q.CountAsync();
+            var published = await q.CountAsync(p => p.Status == PostStatus.Published);
+            var draft     = await q.CountAsync(p => p.Status == PostStatus.Draft && p.IsRejected == false);
+            var pending   = await q.CountAsync(p => p.Status == PostStatus.Draft && p.IsRejected == false);
+            return (total, published, draft, pending);
         }
     }
 }

@@ -13,6 +13,7 @@ namespace BlogWebAPIApp.Interfaces
         Task<(IReadOnlyList<Comment> items, int total)> GetPendingComments(int page, int pageSize);
         Task AdminApprove(Guid commentId);
         Task AdminDelete(Guid commentId);
+        Task<(int total, int pending)> GetCommentStats();
     }
 
 }
