@@ -95,6 +95,7 @@ namespace BlogWebAPIApp.Services
         {
             var comment = await _comments.GetQueryable()
                                          .Include(c => c.Post)
+                                         .Include(c => c.Replies)
                                          .FirstOrDefaultAsync(c => c.Id == commentId)
                           ?? throw new EntityNotFoundException("Comment");
 
@@ -102,7 +103,11 @@ namespace BlogWebAPIApp.Services
             var isPostAuthor = comment.Post.AuthorId == actorUserId;
             if (!isAuthor && !isPostAuthor) throw new UnAuthorizedException("Not allowed");
 
-            await _comments.Delete(commentId); // persists
+            // Delete all replies first (NoAction FK — must remove children before parent)
+            foreach (var reply in comment.Replies.ToList())
+                await _comments.Delete(reply.Id);
+
+            await _comments.Delete(commentId);
         }
 
         public async Task<(IReadOnlyList<Comment> items, int total)> GetByPost(Guid postId, int page, int pageSize)
@@ -159,8 +164,17 @@ namespace BlogWebAPIApp.Services
 
         public async Task AdminDelete(Guid commentId)
         {
-            var comment = await _comments.Get(commentId)
+            var comment = await _comments.GetQueryable()
+                .Include(c => c.Replies)
+                .FirstOrDefaultAsync(c => c.Id == commentId)
                 ?? throw new EntityNotFoundException("Comment");
+
+            // Soft-delete all replies first
+            foreach (var reply in comment.Replies.ToList())
+            {
+                reply.IsDeleted = true;
+                reply.Status = CommentStatus.Removed;
+            }
 
             comment.IsDeleted = true;
             comment.Status = CommentStatus.Removed;

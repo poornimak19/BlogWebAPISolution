@@ -83,16 +83,12 @@ export class SearchComponent implements OnInit {
       next: r => {
         let list = r.items;
 
-        // Client-side multi-select filtering
         if (this.selectedTags().length > 1)
-          list = list.filter(post =>
-            this.selectedTags().every(s => post.tags.includes(s))
-          );
-
+          list = list.filter(post => this.selectedTags().every(s => post.tags.includes(s)));
         if (this.selectedCats().length > 1)
-          list = list.filter(post =>
-            this.selectedCats().every(s => post.categories.includes(s))
-          );
+          list = list.filter(post => this.selectedCats().every(s => post.categories.includes(s)));
+        if (this.sort === 'popular')
+          list = [...list].sort((a, b) => (b.likesCount ?? 0) - (a.likesCount ?? 0));
 
         this.posts.set(list);
         this.total.set(r.total);
@@ -136,15 +132,19 @@ export class SearchComponent implements OnInit {
   }
 
   reset(): void {
-  this.query = '';
-  this.selectedTags.set([]);
-  this.selectedCats.set([]);
-  this.sort = 'recent';
-  this.page.set(1);
-  this.hasSearched.set(false);
+    this.query = '';
+    this.selectedTags.set([]);
+    this.selectedCats.set([]);
+    this.sort = 'recent';
+    this.page.set(1);
+    this.hasSearched.set(false);
+    this.fetch(1);
+  }
 
-  // ✅ Load all posts again (same as home)
-  this.fetch(1);
-}
+  setSort(s: string): void {
+    this.sort = s;
+    this.page.set(1);
+    this.fetch(1);
+  }
 
 }

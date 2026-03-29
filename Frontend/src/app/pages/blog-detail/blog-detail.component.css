@@ -54,7 +54,7 @@
 .author-link:hover .author-name { text-decoration: underline; }
 
 .detail-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.act-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1.5px solid var(--border); border-radius: 100px; background: var(--bg-card); font-size: 0.82rem; font-weight: 500; cursor: pointer; text-decoration: none; color: var(--text-muted); transition: all 0.15s; font-family: inherit; }
+.act-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1.5px solid var(--border); border-radius: 100px; background: var(--bg-card); font-size: 0.82rem; font-weight: 500; cursor: pointer; text-decoration: none; color: #e53e3e; transition: all 0.15s; font-family: inherit; }
 .act-btn:hover { border-color: var(--ink); color: var(--text-primary); }
 .act-btn--liked { border-color: #fed7d7; color: #e53e3e; background: #fff5f5; }
 .act-btn--edit  { color: #3b5bdb; border-color: #dbeafe; } .act-btn--edit:hover { background: #eff6ff; }

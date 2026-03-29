@@ -20,6 +20,7 @@ export interface PostSummaryDto {
   author: AuthorSummaryDto;
   tags: string[];
   categories: string[];
+  likesCount: number;
 }
 
 export interface PostDetailDto {
@@ -41,6 +42,7 @@ export interface PostDetailDto {
   tags: string[];
   categories: string[];
   allowedAudienceUserIds: string[];
+  likesCount: number;
 }
 
 export interface CreatePostRequestDto {

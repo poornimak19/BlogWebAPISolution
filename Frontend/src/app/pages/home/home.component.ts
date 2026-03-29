@@ -59,17 +59,17 @@ export class HomeComponent implements OnInit {
 
   loadPosts(): void {
     this.loading.set(true);
-    // Pass first selected tag/cat to API (API supports one at a time; multi-select filters client-side for additional)
     const tag = this.selectedTags().length > 0 ? this.selectedTags()[0] : undefined;
     const cat = this.selectedCats().length > 0 ? this.selectedCats()[0] : undefined;
     this.postSvc.getPublished(this.page(), this.pageSize, undefined, tag, cat).subscribe({
       next: r => {
-        // Client-side filter remaining selections if more than one
         let items = r.items;
         if (this.selectedTags().length > 1)
           items = items.filter(p => this.selectedTags().every(s => p.tags.includes(s)));
         if (this.selectedCats().length > 1)
           items = items.filter(p => this.selectedCats().every(s => p.categories.includes(s)));
+        if (this.sort() === 'popular')
+          items = [...items].sort((a, b) => (b.likesCount ?? 0) - (a.likesCount ?? 0));
         this.posts.set(items);
         this.total.set(r.total);
         this.loading.set(false);

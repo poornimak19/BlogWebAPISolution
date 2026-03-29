@@ -80,7 +80,8 @@ namespace BlogWebAPIApp.Models.DTOs
         DateTime UpdatedAt,
         AuthorSummaryDto Author,
         IReadOnlyList<string> Tags,
-        IReadOnlyList<string> Categories
+        IReadOnlyList<string> Categories,
+        int LikesCount
     );
 
     public record PostDetailDto(
@@ -101,7 +102,8 @@ namespace BlogWebAPIApp.Models.DTOs
         AuthorSummaryDto Author,
         IReadOnlyList<string> Tags,
         IReadOnlyList<string> Categories,
-        IReadOnlyList<Guid> AllowedAudienceUserIds // empty unless Restricted
+        IReadOnlyList<Guid> AllowedAudienceUserIds,
+        int LikesCount
     );
 
     public record PagedResponseDto<T>(IReadOnlyList<T> Items, int Total, int Page, int PageSize);

@@ -25,7 +25,7 @@ export class PostCardComponent implements OnInit {
   likeCount  = signal(0);
   imgBroken  = signal(false);   // track load errors
 
-  ngOnInit(): void { this.likeCount.set(0); this.imgBroken.set(false); }
+  ngOnInit(): void { this.likeCount.set(this.post.likesCount ?? 0); this.imgBroken.set(false); }
 
   /** True only when coverImageUrl is a non-empty string and hasn't errored */
   get hasCover(): boolean {

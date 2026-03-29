@@ -117,6 +117,7 @@ namespace BlogWebAPIApp.Services
                 .Include(p => p.Author)
                 .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
                 .Include(p => p.PostCategories).ThenInclude(pc => pc.Category)
+                .Include(p => p.Likes)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
         // ------------------ GET BY SLUG -------------------------
@@ -126,6 +127,8 @@ namespace BlogWebAPIApp.Services
                 .Include(p => p.Author.Followers)
                 .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
                 .Include(p => p.PostCategories).ThenInclude(pc => pc.Category)
+                .Include(p => p.Likes)
+                .Include(p => p.Audience)
                 .FirstOrDefaultAsync(p => p.Slug == slug);
 
         // ------------------ UPDATE -------------------------
@@ -262,6 +265,7 @@ namespace BlogWebAPIApp.Services
                 .Include(p => p.Author.Followers)
                 .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
                 .Include(p => p.PostCategories).ThenInclude(pc => pc.Category)
+                .Include(p => p.Likes)
                 .Where(p => p.Status == PostStatus.Published);
 
             query = query.Where(p =>
@@ -317,6 +321,7 @@ namespace BlogWebAPIApp.Services
                 .Include(p => p.Author)
                 .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
                 .Include(p => p.PostCategories).ThenInclude(pc => pc.Category)
+                .Include(p => p.Likes)
                 .ToListAsync();
 
             return (items, total);

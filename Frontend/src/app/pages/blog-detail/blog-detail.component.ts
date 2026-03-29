@@ -54,6 +54,7 @@ export class BlogDetailComponent implements OnInit {
     this.postSvc.getBySlug(slug).subscribe({
       next: p => {
         this.post.set(p);
+        this.likeCount.set(p.likesCount ?? 0);
         this.loading.set(false);
         this.loadRelated(p);
       },

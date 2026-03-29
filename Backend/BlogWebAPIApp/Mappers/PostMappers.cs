@@ -24,7 +24,8 @@ namespace BlogWebAPIApp.Mappers
                 p.UpdatedAt,
                 p.Author != null? p.Author.ToAuthorSummaryDto():new AuthorSummaryDto(Guid.Empty, "(unknown)", null, null),
                 p.PostTags.Select(t => t.Tag.Slug).ToList(),
-                p.PostCategories.Select(c => c.Category.Slug).ToList()
+                p.PostCategories.Select(c => c.Category.Slug).ToList(),
+                p.Likes.Count
             );
 
         public static PostDetailDto ToDetailDto(this Post p) =>
@@ -46,7 +47,8 @@ namespace BlogWebAPIApp.Mappers
                 p.Author != null? p.Author.ToAuthorSummaryDto(): new AuthorSummaryDto(Guid.Empty, "(unknown)", null, null),
                 p.PostTags.Select(t => t.Tag.Slug).ToList(),
                 p.PostCategories.Select(c => c.Category.Slug).ToList(),
-                p.Audience.Select(a => a.UserId).ToList()
+                p.Audience.Select(a => a.UserId).ToList(),
+                p.Likes.Count
             );
     }
 
