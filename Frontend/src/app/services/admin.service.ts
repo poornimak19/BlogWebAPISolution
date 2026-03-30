@@ -76,6 +76,14 @@ export class AdminService {
       .pipe(catchError(e => throwError(() => e)));
   }
 
+  getAllPosts(page = 1, pageSize = 20, q?: string, visibility?: string): Observable<PagedResponseDto<AdminPostDto>> {
+    let params = new HttpParams().set('page', page).set('pageSize', pageSize);
+    if (q) params = params.set('q', q);
+    if (visibility && visibility !== 'all') params = params.set('visibility', visibility);
+    return this.http.get<PagedResponseDto<AdminPostDto>>(`${this.base}/posts/admin/all`, { params })
+      .pipe(catchError(e => throwError(() => e)));
+  }
+
   approvePost(postId: string): Observable<any> {
     return this.http.put(`${this.base}/posts/${postId}/approve`, {})
       .pipe(catchError(e => throwError(() => e)));

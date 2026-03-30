@@ -1,0 +1,132 @@
+<div class="admin-layout">
+  <app-admin-nav/>
+
+  <main class="admin-main">
+    <div class="admin-page-header">
+      <h1 class="admin-page-title">Manage Blogs</h1>
+      <p class="admin-page-sub">{{ total() }} total blog{{ total() !== 1 ? 's' : '' }} — all statuses &amp; visibility</p>
+    </div>
+
+    <!-- Toolbar: search + visibility filter -->
+    <div class="blogs-toolbar">
+      <div class="blogs-search">
+        <input class="blogs-search-input" type="text" [(ngModel)]="query"
+          placeholder="Search by title or author…"
+          (keyup.enter)="search()"/>
+        <button class="blogs-search-btn" (click)="search()">Search</button>
+        @if (query) {
+          <button class="blogs-search-clear" (click)="query=''; search()">✕</button>
+        }
+      </div>
+
+      <div class="blogs-filters">
+        <label class="filter-label">Visibility</label>
+        <select class="filter-select" [(ngModel)]="visibility" (change)="onVisibilityChange()">
+          <option value="all">All</option>
+          <option value="Public">Public</option>
+          <option value="Private">Private</option>
+        </select>
+
+        <label class="filter-label">Show</label>
+        <select class="filter-select" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+          @for (n of pageSizeOptions; track n) {
+            <option [value]="n">{{ n }} per page</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="admin-sk-table">
+        @for (s of [1,2,3,4,5]; track s) { <div class="admin-sk-row"></div> }
+      </div>
+    } @else if (posts().length === 0) {
+      <div class="admin-empty">
+        <div class="admin-empty-icon">📭</div>
+        <p>No blogs found.</p>
+      </div>
+    } @else {
+      <div class="posts-list">
+        @for (post of posts(); track post.id) {
+          <div class="post-row">
+
+            @if (post.coverImageUrl) {
+              <img [src]="post.coverImageUrl" alt="" class="post-thumb"
+                (error)="$any($event.target).style.display='none'"/>
+            } @else {
+              <div class="post-thumb-placeholder">{{ post.title[0]?.toUpperCase() }}</div>
+            }
+
+            <div class="post-info">
+              <div class="post-meta-top">
+                <span class="badge {{ statusClass(post.status) }}">{{ post.status }}</span>
+                <span class="badge" [class.badge--warning]="post.visibility === 'Private'" [class.badge--info]="post.visibility !== 'Private'">
+                  {{ post.visibility }}
+                </span>
+                @if (post.isRejected) { <span class="badge badge--danger">Rejected</span> }
+              </div>
+              <h3 class="post-title">{{ post.title }}</h3>
+              <div class="post-meta">
+                <span>by <strong>{{ post.author.displayName || post.author.username }}</strong></span>
+                <span class="meta-sep">·</span>
+                <span>{{ post.createdAt | date:'MMM d, y' }}</span>
+                @if (post.tags.length > 0) {
+                  <span class="meta-sep">·</span>
+                  @for (tag of post.tags.slice(0,3); track tag) {
+                    <span class="post-tag">{{ tag }}</span>
+                  }
+                }
+              </div>
+            </div>
+
+            <div class="post-actions">
+              <button class="act-btn act-btn--neutral" (click)="openPreview(post)">Preview</button>
+              <button class="act-btn act-btn--danger"  (click)="deletePost(post)">Delete</button>
+            </div>
+
+          </div>
+        }
+      </div>
+
+      <!-- Pagination dropdown -->
+      @if (totalPages > 1) {
+        <div class="pagination">
+          <button class="pg-arrow" [disabled]="page() === 1" (click)="goTo(page() - 1)">‹</button>
+          <select class="pg-select" [ngModel]="page()" (ngModelChange)="goTo($event)">
+            @for (p of [].constructor(totalPages); track $index) {
+              <option [value]="$index + 1">Page {{ $index + 1 }} of {{ totalPages }}</option>
+            }
+          </select>
+          <button class="pg-arrow" [disabled]="page() === totalPages" (click)="goTo(page() + 1)">›</button>
+        </div>
+      }
+    }
+  </main>
+</div>
+
+<!-- Preview Modal -->
+@if (previewPost() || previewLoading()) {
+  <div class="preview-backdrop" (click)="closePreview()">
+    <div class="preview-modal" (click)="$event.stopPropagation()">
+      <button class="preview-close" (click)="closePreview()">✕</button>
+      @if (previewLoading()) {
+        <div class="preview-loading">Loading preview…</div>
+      } @else if (previewPost(); as p) {
+        @if (p.coverImageUrl) {
+          <img [src]="p.coverImageUrl" alt="" class="preview-cover"/>
+        }
+        <div class="preview-body">
+          <div class="preview-meta">
+            <span>by <strong>{{ p.author.displayName || p.author.username }}</strong></span>
+            <span class="meta-sep">·</span>
+            <span>{{ p.createdAt | date:'MMM d, y' }}</span>
+            @for (tag of p.tags; track tag) { <span class="post-tag">{{ tag }}</span> }
+          </div>
+          <h2 class="preview-title">{{ p.title }}</h2>
+          @if (p.excerpt) { <p class="preview-excerpt">{{ p.excerpt }}</p> }
+          <div class="preview-content" [innerHTML]="p.contentHtml"></div>
+        </div>
+      }
+    </div>
+  </div>
+}

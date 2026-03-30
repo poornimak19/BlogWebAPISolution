@@ -65,5 +65,6 @@ namespace BlogWebAPIApp.Interfaces
         Task RejectPost(Guid postId);
         Task AdminDelete(Guid postId);
         Task<(int total, int published, int draft, int pending)> GetPostStats();
+        Task<(IReadOnlyList<Post> items, int total)> GetAllPosts(int page, int pageSize, string? q, string? visibility);
     }
 }

@@ -324,6 +324,23 @@ namespace BlogWebAPIApp.Controllers
             return Ok(new { total, published, draft, pending });
         }
 
+        // ====================================
+        // ✅ ADMIN: Get ALL posts (all statuses/visibility)
+        // ====================================
+        [Authorize(Roles = "Admin")]
+        [HttpGet("admin/all")]
+        public async Task<ActionResult<PagedResponseDto<PostSummaryDto>>> GetAllPosts(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            [FromQuery] string? q = null,
+            [FromQuery] string? visibility = null)
+        {
+            var (items, total) = await _posts.GetAllPosts(page, pageSize, q, visibility);
+            return Ok(new PagedResponseDto<PostSummaryDto>(
+                items.Select(p => p.ToSummaryDto()).ToList(),
+                total, page, pageSize));
+        }
+
     }
 
 }

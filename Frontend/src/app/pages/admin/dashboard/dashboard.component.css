@@ -58,7 +58,7 @@
 /* Quick links */
 .quick-links { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
 .ql-title { font-size: 0.9rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 16px; }
-.ql-grid  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.ql-grid  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .ql-card  {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
   padding: 20px 20px; border: 1.5px solid var(--border); border-radius: 12px;

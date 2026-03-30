@@ -398,5 +398,31 @@ namespace BlogWebAPIApp.Services
             var pending   = await q.CountAsync(p => p.Status == PostStatus.Draft && p.IsRejected == false);
             return (total, published, draft, pending);
         }
+
+        public async Task<(IReadOnlyList<Post> items, int total)> GetAllPosts(int page, int pageSize, string? q, string? visibility)
+        {
+            var query = _posts.GetQueryable()
+                .Include(p => p.Author)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .Include(p => p.PostCategories).ThenInclude(pc => pc.Category)
+                .Include(p => p.Likes)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(q))
+                query = query.Where(p => p.Title.Contains(q) || p.Author.Username.Contains(q));
+
+            if (!string.IsNullOrWhiteSpace(visibility) &&
+                System.Enum.TryParse<Visibility>(visibility, true, out var vis))
+                query = query.Where(p => p.Visibility == vis);
+
+            var total = await query.CountAsync();
+            var items = await query
+                .OrderByDescending(p => p.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, total);
+        }
     }
 }
