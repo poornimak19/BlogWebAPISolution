@@ -20,8 +20,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
     {
-        // Enums serialize/deserialize as strings like "Admin", "Blogger", "Reader"
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
+        o.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
     });
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -100,6 +100,7 @@ builder.Services.AddScoped<IReactionService, ReactionService>();
 builder.Services.AddScoped<IFollowService, FollowService>();
 builder.Services.AddScoped<ITaxonomyService, TaxonomyService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
 
 
@@ -122,3 +123,14 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Ensures all DateTime values are serialized with a trailing 'Z' (UTC indicator)
+// so Angular's DatePipe displays the correct local time instead of treating UTC as local.
+public class UtcDateTimeConverter : System.Text.Json.Serialization.JsonConverter<DateTime>
+{
+    public override DateTime Read(ref System.Text.Json.Utf8JsonReader reader, Type t, System.Text.Json.JsonSerializerOptions o)
+        => DateTime.SpecifyKind(reader.GetDateTime(), DateTimeKind.Utc);
+
+    public override void Write(System.Text.Json.Utf8JsonWriter writer, DateTime value, System.Text.Json.JsonSerializerOptions o)
+        => writer.WriteStringValue(DateTime.SpecifyKind(value, DateTimeKind.Utc));
+}

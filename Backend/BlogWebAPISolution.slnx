@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="BlogAppTest/BlogAppTest.csproj" Id="e4686df9-f885-4c0d-a545-e19dde52dcb1" />
   <Project Path="BlogWebAPIApp/BlogWebAPIApp.csproj" />
 </Solution>

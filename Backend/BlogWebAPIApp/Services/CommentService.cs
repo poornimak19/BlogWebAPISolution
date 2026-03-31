@@ -30,7 +30,7 @@ namespace BlogWebAPIApp.Services
             var author = await _users.Get(authorId)
     ?? throw new InvalidOperationException("User not found");
 
-            // ✅ Block commenting if banned
+            //  Block commenting if banned
             if (!author.CanComment)
                 throw new InvalidOperationException("You are banned from commenting.");
 

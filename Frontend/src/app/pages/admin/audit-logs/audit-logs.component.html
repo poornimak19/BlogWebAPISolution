@@ -1,0 +1,147 @@
+<div class="admin-layout">
+  <app-admin-nav/>
+
+  <main class="admin-main">
+
+    <div class="admin-page-header">
+      <h1 class="admin-page-title">Audit Logs</h1>
+      <p class="admin-page-sub">{{ total() }} total entr{{ total() !== 1 ? 'ies' : 'y' }} recorded</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+      <select class="f-select" [(ngModel)]="filterAction" (change)="applyFilters()">
+        @for (a of actions; track a) {
+          <option [value]="a">{{ a || 'All Actions' }}</option>
+        }
+      </select>
+
+      <select class="f-select" [(ngModel)]="filterEntity" (change)="applyFilters()">
+        @for (e of entities; track e) {
+          <option [value]="e">{{ e || 'All Entities' }}</option>
+        }
+      </select>
+
+      <select class="f-select" [(ngModel)]="filterStatus" (change)="applyFilters()">
+        @for (s of statuses; track s) {
+          <option [value]="s">{{ s || 'All Statuses' }}</option>
+        }
+      </select>
+
+      <input class="f-input" type="date" [(ngModel)]="filterFrom" (change)="applyFilters()" title="From date"/>
+      <input class="f-input" type="date" [(ngModel)]="filterTo"   (change)="applyFilters()" title="To date"/>
+
+      <select class="f-select f-select--sm" [(ngModel)]="pageSize" (change)="applyFilters()">
+        @for (n of pageSizes; track n) {
+          <option [value]="n">{{ n }} / page</option>
+        }
+      </select>
+
+      <button class="f-reset" (click)="resetFilters()" type="button">Reset</button>
+    </div>
+
+    <!-- Skeleton -->
+    @if (loading()) {
+      <div class="sk-list">
+        @for (s of [1,2,3,4,5,6,7,8]; track s) { <div class="sk-row"></div> }
+      </div>
+    }
+
+    <!-- Empty -->
+    @else if (logs().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <p>No audit log entries found.</p>
+      </div>
+    }
+
+    <!-- Table -->
+    @else {
+      <div class="log-table-wrap">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Action</th>
+              <th>Entity</th>
+              <th>Entity ID</th>
+              <th>User and Role</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (log of logs(); track log.id) {
+              <tr class="log-row" [class.log-row--expanded]="expandedId() === log.id">
+                <td class="td-time">{{ log.timestamp | date:'MMM d, y · HH:mm:ss' }}</td>
+                <td><span class="badge {{ actionClass(log.action) }}">{{ log.action }}</span></td>
+                <td class="td-entity">{{ log.entityName }}</td>
+                <td class="td-id" title="{{ log.entityId }}">{{ log.entityId | slice:0:8 }}…</td>
+                <td class="td-user">
+                  <span class="user-name">{{ log.username || '—' }}</span>
+                  @if (log.userRole) {
+                    <span class="badge {{ roleClass(log.userRole) }} badge--sm">{{ log.userRole }}</span>
+                  }
+                </td>
+                <td><span class="badge {{ statusClass(log.status) }}">{{ log.status }}</span></td>
+                <td>
+                  <button class="expand-btn" (click)="toggleExpand(log.id)"
+                    [class.expand-btn--open]="expandedId() === log.id">
+                    {{ expandedId() === log.id ? '▲' : '▼' }}
+                  </button>
+                </td>
+              </tr>
+
+              @if (expandedId() === log.id) {
+                <tr class="detail-row">
+                  <td colspan="8">
+                    <div class="detail-panel">
+                      @if (log.description) {
+                        <p class="detail-desc">{{ log.description }}</p>
+                      }
+                      <div class="detail-grid">
+                        @if (log.oldValues) {
+                          <div class="detail-block">
+                            <p class="detail-label">Old Values</p>
+                            <pre class="detail-json">{{ formatJson(log.oldValues) }}</pre>
+                          </div>
+                        }
+                        @if (log.newValues) {
+                          <div class="detail-block">
+                            <p class="detail-label">New Values</p>
+                            <pre class="detail-json">{{ formatJson(log.newValues) }}</pre>
+                          </div>
+                        }
+                        @if (!log.oldValues && !log.newValues) {
+                          <p class="detail-none">No value snapshot available.</p>
+                        }
+                      </div>
+                      @if (log.userAgent) {
+                        <p class="detail-ua">{{ log.userAgent }}</p>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <div class="pagination">
+          <button class="pg-arrow" [disabled]="page() === 1" (click)="goTo(page() - 1)">‹</button>
+          <select class="pg-select" [ngModel]="page()" (ngModelChange)="goTo($event)">
+            @for (p of [].constructor(totalPages); track $index) {
+              <option [value]="$index + 1">Page {{ $index + 1 }} of {{ totalPages }}</option>
+            }
+          </select>
+          <button class="pg-arrow" [disabled]="page() === totalPages" (click)="goTo(page() + 1)">›</button>
+          <span class="pg-info">{{ total() }} entries</span>
+        </div>
+      }
+    }
+
+  </main>
+</div>

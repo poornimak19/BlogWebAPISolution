@@ -64,6 +64,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/admin/blogs/blogs.component').then(m => m.AdminBlogsComponent)
   },
   {
+    path: 'admin/audit-logs',
+    canActivate: [authGuard, adminGuard],
+    loadComponent: () => import('./pages/admin/audit-logs/audit-logs.component').then(m => m.AuditLogsComponent)
+  },
+  {
     path: 'admin/taxonomy',
     canActivate: [authGuard, adminGuard],
     loadComponent: () => import('./pages/admin/taxonomy/taxonomy.component').then(m => m.AdminTaxonomyComponent)

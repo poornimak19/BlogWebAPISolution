@@ -116,7 +116,20 @@ export class AdminService {
       .pipe(catchError(e => throwError(() => e)));
   }
 
-  // ── Taxonomy ─────────────────────────────────────────────
+  // ── Audit Logs ───────────────────────────────────────────
+  getAuditLogs(filter: Partial<import('../models/audit-log.models').AuditLogFilterDto>): Observable<any> {
+    let params = new HttpParams()
+      .set('page', filter.page ?? 1)
+      .set('pageSize', filter.pageSize ?? 20);
+    if (filter.action)     params = params.set('action', filter.action);
+    if (filter.entityName) params = params.set('entityName', filter.entityName);
+    if (filter.status)     params = params.set('status', filter.status);
+    if (filter.from)       params = params.set('from', filter.from);
+    if (filter.to)         params = params.set('to', filter.to);
+    if (filter.userId)     params = params.set('userId', filter.userId);
+    return this.http.get<any>(`${this.base}/auditlogs`, { params })
+      .pipe(catchError(e => throwError(() => e)));
+  }
   getTags(): Observable<TagDto[]> {
     return this.http.get<TagDto[]>(`${this.base}/taxonomy/tags`)
       .pipe(catchError(e => throwError(() => e)));
