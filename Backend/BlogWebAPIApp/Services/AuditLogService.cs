@@ -10,12 +10,15 @@ namespace BlogWebAPIApp.Services
 {
     public class AuditLogService : IAuditLogService
     {
-        private readonly BlogContext _db;
+        private readonly IRepository<Guid, AuditLog>  _db;
+        private readonly IRepository<Guid, User> _user;
         private readonly IHttpContextAccessor _http;
 
-        public AuditLogService(BlogContext db, IHttpContextAccessor http)
+        //public AuditLogService(BlogContext db, IHttpContextAccessor http)
+        public AuditLogService(IRepository<Guid, AuditLog> db, IRepository<Guid, User> user,IHttpContextAccessor http)
         {
             _db   = db;
+            _user = user;
             _http = http;
         }
 
@@ -48,14 +51,14 @@ namespace BlogWebAPIApp.Services
             };
 
             // Use base.SaveChangesAsync to avoid triggering the audit override again
-            _db.AuditLogs.Add(log);
+            var result = await _db.Add(log);
             await _db.SaveChangesAsync();
         }
 
         /// <inheritdoc/>
         public async Task<(IReadOnlyList<AuditLogDto> items, int total)> GetLogsAsync(AuditLogFilterDto filter)
         {
-            var logQuery = _db.AuditLogs.AsNoTracking().AsQueryable();
+            var logQuery = _db.GetQueryable().AsNoTracking().AsQueryable();
 
             if (filter.UserId.HasValue)
                 logQuery = logQuery.Where(l => l.UserId == filter.UserId.Value);
@@ -88,7 +91,7 @@ namespace BlogWebAPIApp.Services
 
             // Single query to fetch only the users we need
             var userMap = userIds.Count > 0
-                ? await _db.Users.AsNoTracking()
+                ? await _user.GetQueryable().AsNoTracking()
                     .Where(u => userIds.Contains(u.Id))
                     .Select(u => new { u.Id, u.Username, Role = u.Role.ToString() })
                     .ToListAsync()

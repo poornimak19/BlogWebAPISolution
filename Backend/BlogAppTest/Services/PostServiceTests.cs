@@ -9,11 +9,6 @@ using static BlogWebAPIApp.Models.Enum;
 
 namespace BlogAppTest.Services
 {
-    /// <summary>
-    /// PostService uses IRepository&lt;Guid, Tag&gt; and IRepository&lt;Guid, Category&gt;
-    /// (production mismatch — Tag/Category have int PKs but service declares Guid key).
-    /// We use Moq for those two repos and EF InMemory for Users/Posts.
-    /// </summary>
     public class PostServiceTests : IDisposable
     {
         private readonly BlogContext _db;
@@ -21,8 +16,6 @@ namespace BlogAppTest.Services
         private readonly InMemoryRepository<Guid, Post> _posts;
         private readonly Mock<IRepository<Guid, Tag>>      _tagsMock;
         private readonly Mock<IRepository<Guid, Category>> _categoriesMock;
-        private readonly List<Tag>      _tagList      = [];
-        private readonly List<Category> _categoryList = [];
         private readonly PostService _sut;
 
         public PostServiceTests()
@@ -33,7 +26,6 @@ namespace BlogAppTest.Services
             _tagsMock       = new Mock<IRepository<Guid, Tag>>();
             _categoriesMock = new Mock<IRepository<Guid, Category>>();
 
-            // EF-backed queryable for tags/categories via the same DbContext
             _tagsMock.Setup(r => r.GetQueryable()).Returns(() => _db.Tags.AsQueryable());
             _categoriesMock.Setup(r => r.GetQueryable()).Returns(() => _db.Categories.AsQueryable());
 
@@ -50,52 +42,71 @@ namespace BlogAppTest.Services
 
         public void Dispose() => _db.Dispose();
 
-        private User SeedUser()
+        // ── Helpers ───────────────────────────────────────────────────────────
+
+        private User SeedUser(string? username = null)
         {
-            var u = new User { Id = Guid.NewGuid(), Username = Guid.NewGuid().ToString("N")[..10], Email = $"{Guid.NewGuid():N}@t.com", Password = [], PasswordHash = [] };
+            var u = new User
+            {
+                Id = Guid.NewGuid(),
+                Username = username ?? Guid.NewGuid().ToString("N")[..10],
+                Email = $"{Guid.NewGuid():N}@t.com",
+                Password = [], PasswordHash = []
+            };
             _users.Seed([u]);
             return u;
         }
 
-        private Post SeedPost(Guid authorId, PostStatus status = PostStatus.Draft, bool isRejected = false, Visibility visibility = Visibility.Public)
+        private Post SeedPost(Guid authorId,
+            PostStatus status = PostStatus.Draft,
+            bool isRejected   = false,
+            Visibility vis    = Visibility.Public,
+            string? slug      = null,
+            string? title     = null)
         {
             var p = new Post
             {
-                Id          = Guid.NewGuid(),
-                AuthorId    = authorId,
-                Title       = "Test Post",
-                Slug        = "test-post-" + Guid.NewGuid().ToString("N")[..6],
+                Id = Guid.NewGuid(), AuthorId = authorId,
+                Title = title ?? "Test Post",
+                Slug  = slug  ?? "slug-" + Guid.NewGuid().ToString("N")[..6],
                 ContentHtml = "<p>content</p>",
-                Status      = status,
-                Visibility  = visibility,
-                IsRejected  = isRejected
+                Status = status, Visibility = vis, IsRejected = isRejected,
+                CreatedAt = DateTime.UtcNow
             };
             _posts.Seed([p]);
             return p;
         }
 
-        // ── Create ────────────────────────────────────────────────────────────
+        private Tag SeedTag(string slug)
+        {
+            var t = new Tag { Name = slug, Slug = slug };
+            _db.Tags.Add(t); _db.SaveChanges();
+            return t;
+        }
+
+        private Category SeedCategory(string slug)
+        {
+            var c = new Category { Name = slug, Slug = slug };
+            _db.Categories.Add(c); _db.SaveChanges();
+            return c;
+        }
+
+        // ── Create — basic ────────────────────────────────────────────────────
 
         [Fact]
-        public async Task Create_ShouldReturnPost_WhenAuthorExists()
+        public async Task Create_ShouldReturnPost_WithDraftStatus()
         {
             var user = SeedUser();
-
             var post = await _sut.Create(user.Id, "My Title", null, null, "<p>html</p>", null, "Public", null, null, null, null, "");
-
-            Assert.NotNull(post);
-            Assert.Equal("my-title", post.Slug);
             Assert.Equal(PostStatus.Draft, post.Status);
+            Assert.Equal("my-title", post.Slug);
         }
 
         [Fact]
-        public async Task Create_ShouldUseProvidedSlug_WhenSlugSupplied()
+        public async Task Create_ShouldUseProvidedSlug()
         {
             var user = SeedUser();
-
-            // Slugify converts "my custom slug" → "my-custom-slug"
             var post = await _sut.Create(user.Id, "Title", "my custom slug", null, "html", null, "Public", null, null, null, null, "");
-
             Assert.Equal("my-custom-slug", post.Slug);
         }
 
@@ -103,11 +114,8 @@ namespace BlogAppTest.Services
         public async Task Create_ShouldAppendSuffix_WhenSlugAlreadyExists()
         {
             var user = SeedUser();
-            // Seed a post with slug "test-post"
-            _posts.Seed([new Post { Id = Guid.NewGuid(), AuthorId = user.Id, Title = "Test Post", Slug = "test-post", ContentHtml = "" }]);
-
+            SeedPost(user.Id, slug: "test-post");
             var post = await _sut.Create(user.Id, "Test Post", null, null, "html", null, "Public", null, null, null, null, "");
-
             Assert.StartsWith("test-post-", post.Slug);
         }
 
@@ -119,35 +127,87 @@ namespace BlogAppTest.Services
         }
 
         [Fact]
+        public async Task Create_ShouldDefaultCommentsEnabled_WhenNull()
+        {
+            var user = SeedUser();
+            var post = await _sut.Create(user.Id, "T", null, null, "html", null, "Public", null, null, null, null, "");
+            Assert.True(post.CommentsEnabled);
+        }
+
+        [Fact]
+        public async Task Create_ShouldDefaultAutoApproveComments_WhenNull()
+        {
+            var user = SeedUser();
+            var post = await _sut.Create(user.Id, "T", null, null, "html", null, "Public", null, null, null, null, "");
+            Assert.True(post.AutoApproveComments);
+        }
+
+        [Fact]
+        public async Task Create_ShouldRespectCommentsEnabled_WhenFalse()
+        {
+            var user = SeedUser();
+            var post = await _sut.Create(user.Id, "T", null, null, "html", null, "Public", null, null, false, null, "");
+            Assert.False(post.CommentsEnabled);
+        }
+
+        [Fact]
+        public async Task Create_ShouldRespectAutoApproveComments_WhenFalse()
+        {
+            var user = SeedUser();
+            var post = await _sut.Create(user.Id, "T", null, null, "html", null, "Public", null, null, null, false, "");
+            Assert.False(post.AutoApproveComments);
+        }
+
+        // ── Create — tags & categories ────────────────────────────────────────
+
+        [Fact]
         public async Task Create_ShouldCreateNewTags_WhenTagsDontExist()
         {
             var user = SeedUser();
-
-            await _sut.Create(user.Id, "Title", null, null, "html", null, "Public", ["dotnet", "csharp"], null, null, null, "");
-
+            await _sut.Create(user.Id, "T", null, null, "html", null, "Public", ["dotnet", "csharp"], null, null, null, "");
             Assert.Equal(2, _db.Tags.Count());
         }
 
         [Fact]
-        public async Task Create_ShouldReuseExistingTags_WhenTagsAlreadyExist()
+        public async Task Create_ShouldReuseExistingTags()
         {
             var user = SeedUser();
-            _db.Tags.Add(new Tag { Name = "dotnet", Slug = "dotnet" });
-            _db.SaveChanges();
-
-            await _sut.Create(user.Id, "Title", null, null, "html", null, "Public", ["dotnet"], null, null, null, "");
-
-            Assert.Equal(1, _db.Tags.Count()); // no new tag created
+            SeedTag("dotnet");
+            await _sut.Create(user.Id, "T", null, null, "html", null, "Public", ["dotnet"], null, null, null, "");
+            Assert.Equal(1, _db.Tags.Count());
         }
 
         [Fact]
         public async Task Create_ShouldCreateNewCategories_WhenCategoriesDontExist()
         {
             var user = SeedUser();
-
-            await _sut.Create(user.Id, "Title", null, null, "html", null, "Public", null, ["Tech", "Science"], null, null, "");
-
+            await _sut.Create(user.Id, "T", null, null, "html", null, "Public", null, ["Tech", "Science"], null, null, "");
             Assert.Equal(2, _db.Categories.Count());
+        }
+
+        [Fact]
+        public async Task Create_ShouldReuseExistingCategories()
+        {
+            var user = SeedUser();
+            SeedCategory("tech");
+            await _sut.Create(user.Id, "T", null, null, "html", null, "Public", null, ["tech"], null, null, "");
+            Assert.Equal(1, _db.Categories.Count());
+        }
+
+        [Fact]
+        public async Task Create_ShouldSkipTags_WhenTagNamesIsNull()
+        {
+            var user = SeedUser();
+            await _sut.Create(user.Id, "T", null, null, "html", null, "Public", null, null, null, null, "");
+            Assert.Equal(0, _db.Tags.Count());
+        }
+
+        [Fact]
+        public async Task Create_ShouldSkipCategories_WhenCategoryNamesIsNull()
+        {
+            var user = SeedUser();
+            await _sut.Create(user.Id, "T", null, null, "html", null, "Public", null, null, null, null, "");
+            Assert.Equal(0, _db.Categories.Count());
         }
 
         // ── GetById ───────────────────────────────────────────────────────────
@@ -157,9 +217,7 @@ namespace BlogAppTest.Services
         {
             var user = SeedUser();
             var post = SeedPost(user.Id);
-
             var result = await _sut.GetById(post.Id);
-
             Assert.NotNull(result);
             Assert.Equal(post.Id, result!.Id);
         }
@@ -167,8 +225,7 @@ namespace BlogAppTest.Services
         [Fact]
         public async Task GetById_ShouldReturnNull_WhenNotFound()
         {
-            var result = await _sut.GetById(Guid.NewGuid());
-            Assert.Null(result);
+            Assert.Null(await _sut.GetById(Guid.NewGuid()));
         }
 
         // ── GetBySlug ─────────────────────────────────────────────────────────
@@ -178,31 +235,16 @@ namespace BlogAppTest.Services
         {
             var user = SeedUser();
             var post = SeedPost(user.Id);
-
-            var result = await _sut.GetBySlug(post.Slug);
-
-            Assert.NotNull(result);
+            Assert.NotNull(await _sut.GetBySlug(post.Slug));
         }
 
         [Fact]
         public async Task GetBySlug_ShouldReturnNull_WhenSlugNotFound()
         {
-            var result = await _sut.GetBySlug("no-such-slug");
-            Assert.Null(result);
+            Assert.Null(await _sut.GetBySlug("no-such-slug"));
         }
 
-        // ── Update ────────────────────────────────────────────────────────────
-
-        [Fact]
-        public async Task Update_ShouldUpdateTitle_WhenCalledByAuthor()
-        {
-            var user = SeedUser();
-            var post = SeedPost(user.Id);
-
-            var updated = await _sut.Update(post.Id, user.Id, "New Title", null, null, null, null, null, null, null, null, null, null, "");
-
-            Assert.Equal("New Title", updated.Title);
-        }
+        // ── Update — field branches ───────────────────────────────────────────
 
         [Fact]
         public async Task Update_ShouldThrow_WhenPostNotFound()
@@ -216,43 +258,136 @@ namespace BlogAppTest.Services
         {
             var user = SeedUser();
             var post = SeedPost(user.Id);
-
             await Assert.ThrowsAsync<UnAuthorizedException>(() =>
                 _sut.Update(post.Id, Guid.NewGuid(), "Hacked", null, null, null, null, null, null, null, null, null, null, ""));
         }
 
         [Fact]
-        public async Task Update_ShouldUpdateVisibility_WhenProvided()
+        public async Task Update_ShouldUpdateTitle()
         {
             var user = SeedUser();
             var post = SeedPost(user.Id);
-
-            var updated = await _sut.Update(post.Id, user.Id, null, null, null, null, null, "Private", null, null, null, null, null, "");
-
-            Assert.Equal(Visibility.Private, updated.Visibility);
+            var result = await _sut.Update(post.Id, user.Id, "New Title", null, null, null, null, null, null, null, null, null, null, "");
+            Assert.Equal("New Title", result.Title);
         }
 
         [Fact]
-        public async Task Update_ShouldUpdateStatus_WhenProvided()
+        public async Task Update_ShouldUpdateSlug()
         {
             var user = SeedUser();
             var post = SeedPost(user.Id);
+            var result = await _sut.Update(post.Id, user.Id, null, "new slug", null, null, null, null, null, null, null, null, null, "");
+            Assert.Equal("new-slug", result.Slug);
+        }
 
-            var updated = await _sut.Update(post.Id, user.Id, null, null, null, null, null, null, null, null, null, null, "Published", "");
+        [Fact]
+        public async Task Update_ShouldUpdateExcerpt()
+        {
+            var user = SeedUser();
+            var post = SeedPost(user.Id);
+            var result = await _sut.Update(post.Id, user.Id, null, null, "new excerpt", null, null, null, null, null, null, null, null, "");
+            Assert.Equal("new excerpt", result.Excerpt);
+        }
 
-            Assert.Equal(PostStatus.Published, updated.Status);
+        [Fact]
+        public async Task Update_ShouldUpdateContentHtml()
+        {
+            var user = SeedUser();
+            var post = SeedPost(user.Id);
+            var result = await _sut.Update(post.Id, user.Id, null, null, null, "<b>new</b>", null, null, null, null, null, null, null, "");
+            Assert.Equal("<b>new</b>", result.ContentHtml);
+        }
+
+        [Fact]
+        public async Task Update_ShouldUpdateContentMarkdown()
+        {
+            var user = SeedUser();
+            var post = SeedPost(user.Id);
+            var result = await _sut.Update(post.Id, user.Id, null, null, null, null, "**new**", null, null, null, null, null, null, "");
+            Assert.Equal("**new**", result.ContentMarkdown);
+        }
+
+        [Fact]
+        public async Task Update_ShouldUpdateCommentsEnabled()
+        {
+            var user = SeedUser();
+            var post = SeedPost(user.Id);
+            var result = await _sut.Update(post.Id, user.Id, null, null, null, null, null, null, null, null, false, null, null, "");
+            Assert.False(result.CommentsEnabled);
+        }
+
+        [Fact]
+        public async Task Update_ShouldUpdateAutoApproveComments()
+        {
+            var user = SeedUser();
+            var post = SeedPost(user.Id);
+            var result = await _sut.Update(post.Id, user.Id, null, null, null, null, null, null, null, null, null, false, null, "");
+            Assert.False(result.AutoApproveComments);
+        }
+
+        [Fact]
+        public async Task Update_ShouldUpdateVisibility()
+        {
+            var user = SeedUser();
+            var post = SeedPost(user.Id);
+            var result = await _sut.Update(post.Id, user.Id, null, null, null, null, null, "Private", null, null, null, null, null, "");
+            Assert.Equal(Visibility.Private, result.Visibility);
+        }
+
+        [Fact]
+        public async Task Update_ShouldUpdateStatus()
+        {
+            var user = SeedUser();
+            var post = SeedPost(user.Id);
+            var result = await _sut.Update(post.Id, user.Id, null, null, null, null, null, null, null, null, null, null, "Published", "");
+            Assert.Equal(PostStatus.Published, result.Status);
+        }
+
+        [Fact]
+        public async Task Update_ShouldUpdateCoverImageUrl()
+        {
+            var user = SeedUser();
+            var post = SeedPost(user.Id);
+            var result = await _sut.Update(post.Id, user.Id, null, null, null, null, null, null, null, null, null, null, null, "https://img.com/cover.jpg");
+            Assert.Equal("https://img.com/cover.jpg", result.CoverImageUrl);
+        }
+
+        [Fact]
+        public async Task Update_ShouldReplaceTags_WhenTagNamesProvided()
+        {
+            var user = SeedUser();
+            var post = SeedPost(user.Id);
+            await _sut.Update(post.Id, user.Id, null, null, null, null, null, null, ["newtag"], null, null, null, null, "");
+            Assert.Equal(1, _db.Tags.Count());
+        }
+
+        [Fact]
+        public async Task Update_ShouldReplaceCategories_WhenCategoryNamesProvided()
+        {
+            var user = SeedUser();
+            var post = SeedPost(user.Id);
+            await _sut.Update(post.Id, user.Id, null, null, null, null, null, null, null, ["newcat"], null, null, null, "");
+            Assert.Equal(1, _db.Categories.Count());
+        }
+
+        [Fact]
+        public async Task Update_ShouldNotChangeTags_WhenTagNamesIsNull()
+        {
+            var user = SeedUser();
+            var post = SeedPost(user.Id);
+            SeedTag("existing");
+            await _sut.Update(post.Id, user.Id, "New Title", null, null, null, null, null, null, null, null, null, null, "");
+            Assert.Equal(1, _db.Tags.Count()); // unchanged
         }
 
         // ── Publish ───────────────────────────────────────────────────────────
 
         [Fact]
-        public async Task Publish_ShouldSetStatusDraft_WhenCalledByAuthor()
+        public async Task Publish_ShouldSetStatusDraft_AndClearRejected()
         {
             var user = SeedUser();
-            var post = SeedPost(user.Id);
-
+            var post = SeedPost(user.Id, isRejected: true);
             await _sut.Publish(post.Id, user.Id);
-
             var updated = await _db.Posts.FindAsync(post.Id);
             Assert.Equal(PostStatus.Draft, updated!.Status);
             Assert.False(updated.IsRejected);
@@ -270,7 +405,6 @@ namespace BlogAppTest.Services
         {
             var user = SeedUser();
             var post = SeedPost(user.Id);
-
             await Assert.ThrowsAsync<UnAuthorizedException>(() =>
                 _sut.Publish(post.Id, Guid.NewGuid()));
         }
@@ -282,9 +416,7 @@ namespace BlogAppTest.Services
         {
             var user = SeedUser();
             var post = SeedPost(user.Id);
-
             await _sut.Delete(post.Id, user.Id);
-
             Assert.Null(await _db.Posts.FindAsync(post.Id));
         }
 
@@ -300,7 +432,6 @@ namespace BlogAppTest.Services
         {
             var user = SeedUser();
             var post = SeedPost(user.Id);
-
             await Assert.ThrowsAsync<UnAuthorizedException>(() =>
                 _sut.Delete(post.Id, Guid.NewGuid()));
         }
@@ -313,25 +444,58 @@ namespace BlogAppTest.Services
             var user = SeedUser();
             SeedPost(user.Id, PostStatus.Published);
             SeedPost(user.Id, PostStatus.Draft);
-
-            var (items, total) = await _sut.GetPublished(1, 10, null, null, null, null);
-
+            var (_, total) = await _sut.GetPublished(1, 10, null, null, null, null);
             Assert.Equal(1, total);
         }
 
         [Fact]
-        public async Task GetPublished_ShouldFilterByKeyword()
+        public async Task GetPublished_ShouldReturnPublicPosts_WhenNoCurrentUser()
         {
             var user = SeedUser();
-            var p    = SeedPost(user.Id, PostStatus.Published);
-            // Update title directly in DB
-            var dbPost = await _db.Posts.FindAsync(p.Id);
-            dbPost!.Title = "C# Tips";
-            await _db.SaveChangesAsync();
-
-            var (items, total) = await _sut.GetPublished(1, 10, "C#", null, null, null);
-
+            SeedPost(user.Id, PostStatus.Published, vis: Visibility.Public);
+            SeedPost(user.Id, PostStatus.Published, vis: Visibility.Private);
+            var (_, total) = await _sut.GetPublished(1, 10, null, null, null, null);
             Assert.Equal(1, total);
+        }
+
+        [Fact]
+        public async Task GetPublished_ShouldReturnPrivatePost_WhenCurrentUserIsAuthor()
+        {
+            var user = SeedUser();
+            SeedPost(user.Id, PostStatus.Published, vis: Visibility.Private);
+            var (_, total) = await _sut.GetPublished(1, 10, null, null, null, user.Id);
+            Assert.Equal(1, total);
+        }
+
+        [Fact]
+        public async Task GetPublished_ShouldFilterByKeyword_InTitle()
+        {
+            var user = SeedUser();
+            SeedPost(user.Id, PostStatus.Published, title: "C# Tips");
+            SeedPost(user.Id, PostStatus.Published, title: "Python Guide");
+            var (_, total) = await _sut.GetPublished(1, 10, "C#", null, null, null);
+            Assert.Equal(1, total);
+        }
+
+        [Fact]
+        public async Task GetPublished_ShouldPaginate_Correctly()
+        {
+            var user = SeedUser();
+            for (int i = 0; i < 5; i++)
+                SeedPost(user.Id, PostStatus.Published);
+            var (page1, total) = await _sut.GetPublished(1, 3, null, null, null, null);
+            var (page2, _)     = await _sut.GetPublished(2, 3, null, null, null, null);
+            Assert.Equal(5, total);
+            Assert.Equal(3, page1.Count);
+            Assert.Equal(2, page2.Count);
+        }
+
+        [Fact]
+        public async Task GetPublished_ShouldReturnEmpty_WhenNoPosts()
+        {
+            var (items, total) = await _sut.GetPublished(1, 10, null, null, null, null);
+            Assert.Equal(0, total);
+            Assert.Empty(items);
         }
 
         // ── GetByAuthor ───────────────────────────────────────────────────────
@@ -339,42 +503,76 @@ namespace BlogAppTest.Services
         [Fact]
         public async Task GetByAuthor_ShouldReturnOnlyAuthorPosts()
         {
-            var user1 = SeedUser();
-            var user2 = SeedUser();
-            SeedPost(user1.Id);
-            SeedPost(user1.Id);
-            SeedPost(user2.Id);
-
-            var (items, total) = await _sut.GetByAuthor(user1.Id, 1, 10);
-
+            var u1 = SeedUser(); var u2 = SeedUser();
+            SeedPost(u1.Id); SeedPost(u1.Id); SeedPost(u2.Id);
+            var (_, total) = await _sut.GetByAuthor(u1.Id, 1, 10);
             Assert.Equal(2, total);
+        }
+
+        [Fact]
+        public async Task GetByAuthor_ShouldReturnEmpty_WhenAuthorHasNoPosts()
+        {
+            var user = SeedUser();
+            var (items, total) = await _sut.GetByAuthor(user.Id, 1, 10);
+            Assert.Equal(0, total);
+            Assert.Empty(items);
+        }
+
+        [Fact]
+        public async Task GetByAuthor_ShouldPaginate_Correctly()
+        {
+            var user = SeedUser();
+            for (int i = 0; i < 5; i++) SeedPost(user.Id);
+            var (page1, total) = await _sut.GetByAuthor(user.Id, 1, 3);
+            var (page2, _)     = await _sut.GetByAuthor(user.Id, 2, 3);
+            Assert.Equal(5, total);
+            Assert.Equal(3, page1.Count);
+            Assert.Equal(2, page2.Count);
         }
 
         // ── GetPendingPosts ───────────────────────────────────────────────────
 
         [Fact]
-        public async Task GetPendingPosts_ShouldReturnDraftNonRejectedPosts()
+        public async Task GetPendingPosts_ShouldReturnDraftNonRejected()
         {
             var user = SeedUser();
             SeedPost(user.Id, PostStatus.Draft,     isRejected: false);
             SeedPost(user.Id, PostStatus.Draft,     isRejected: true);
             SeedPost(user.Id, PostStatus.Published, isRejected: false);
-
-            var (items, total) = await _sut.GetPendingPosts(1, 10);
-
+            var (_, total) = await _sut.GetPendingPosts(1, 10);
             Assert.Equal(1, total);
+        }
+
+        [Fact]
+        public async Task GetPendingPosts_ShouldReturnEmpty_WhenNoPending()
+        {
+            var user = SeedUser();
+            SeedPost(user.Id, PostStatus.Published);
+            var (items, total) = await _sut.GetPendingPosts(1, 10);
+            Assert.Equal(0, total);
+            Assert.Empty(items);
+        }
+
+        [Fact]
+        public async Task GetPendingPosts_ShouldPaginate_Correctly()
+        {
+            var user = SeedUser();
+            for (int i = 0; i < 5; i++) SeedPost(user.Id, PostStatus.Draft, isRejected: false);
+            var (page1, total) = await _sut.GetPendingPosts(1, 3);
+            var (page2, _)     = await _sut.GetPendingPosts(2, 3);
+            Assert.Equal(5, total);
+            Assert.Equal(3, page1.Count);
+            Assert.Equal(2, page2.Count);
         }
 
         // ── ApprovePost ───────────────────────────────────────────────────────
 
         [Fact]
-        public async Task ApprovePost_ShouldSetStatusPublished()
+        public async Task ApprovePost_ShouldSetPublishedAndClearRejected()
         {
             var user = SeedUser();
-            var post = SeedPost(user.Id, PostStatus.Draft);
-
+            var post = SeedPost(user.Id, PostStatus.Draft, isRejected: true);
             await _sut.ApprovePost(post.Id);
-
             var updated = await _db.Posts.FindAsync(post.Id);
             Assert.Equal(PostStatus.Published, updated!.Status);
             Assert.False(updated.IsRejected);
@@ -395,9 +593,7 @@ namespace BlogAppTest.Services
         {
             var user = SeedUser();
             var post = SeedPost(user.Id, PostStatus.Draft);
-
             await _sut.RejectPost(post.Id);
-
             var updated = await _db.Posts.FindAsync(post.Id);
             Assert.True(updated!.IsRejected);
             Assert.Equal(PostStatus.Draft, updated.Status);
@@ -413,13 +609,11 @@ namespace BlogAppTest.Services
         // ── AdminDelete ───────────────────────────────────────────────────────
 
         [Fact]
-        public async Task AdminDelete_ShouldRemovePost_WhenExists()
+        public async Task AdminDelete_ShouldRemovePost()
         {
             var user = SeedUser();
             var post = SeedPost(user.Id);
-
             await _sut.AdminDelete(post.Id);
-
             Assert.Null(await _db.Posts.FindAsync(post.Id));
         }
 
@@ -439,54 +633,92 @@ namespace BlogAppTest.Services
             SeedPost(user.Id, PostStatus.Published);
             SeedPost(user.Id, PostStatus.Draft, isRejected: false);
             SeedPost(user.Id, PostStatus.Draft, isRejected: true);
-
             var (total, published, draft, pending) = await _sut.GetPostStats();
-
             Assert.Equal(3, total);
             Assert.Equal(1, published);
             Assert.Equal(1, draft);
+            Assert.Equal(1, pending);
+        }
+
+        [Fact]
+        public async Task GetPostStats_ShouldReturnZeros_WhenNoPosts()
+        {
+            var (total, published, draft, pending) = await _sut.GetPostStats();
+            Assert.Equal(0, total);
+            Assert.Equal(0, published);
+            Assert.Equal(0, draft);
+            Assert.Equal(0, pending);
         }
 
         // ── GetAllPosts ───────────────────────────────────────────────────────
 
         [Fact]
-        public async Task GetAllPosts_ShouldReturnAllPosts_WhenNoFilters()
+        public async Task GetAllPosts_ShouldReturnAll_WhenNoFilters()
         {
             var user = SeedUser();
             SeedPost(user.Id, PostStatus.Published);
             SeedPost(user.Id, PostStatus.Draft);
-
-            var (items, total) = await _sut.GetAllPosts(1, 10, null, null);
-
+            var (_, total) = await _sut.GetAllPosts(1, 10, null, null);
             Assert.Equal(2, total);
         }
 
         [Fact]
-        public async Task GetAllPosts_ShouldFilterByVisibility()
+        public async Task GetAllPosts_ShouldFilterByVisibility_Public()
         {
             var user = SeedUser();
-            SeedPost(user.Id, visibility: Visibility.Public);
-            SeedPost(user.Id, visibility: Visibility.Private);
-
-            var (items, total) = await _sut.GetAllPosts(1, 10, null, "Private");
-
+            SeedPost(user.Id, vis: Visibility.Public);
+            SeedPost(user.Id, vis: Visibility.Private);
+            var (_, total) = await _sut.GetAllPosts(1, 10, null, "Public");
             Assert.Equal(1, total);
         }
 
         [Fact]
-        public async Task GetAllPosts_ShouldFilterBySearchQuery()
+        public async Task GetAllPosts_ShouldFilterByVisibility_Private()
         {
             var user = SeedUser();
-            var post = SeedPost(user.Id);
-            var dbPost = await _db.Posts.FindAsync(post.Id);
-            dbPost!.Title = "Unique Title XYZ";
-            await _db.SaveChangesAsync();
-
-            SeedPost(user.Id); // another post without XYZ
-
-            var (items, total) = await _sut.GetAllPosts(1, 10, "XYZ", null);
-
+            SeedPost(user.Id, vis: Visibility.Public);
+            SeedPost(user.Id, vis: Visibility.Private);
+            var (_, total) = await _sut.GetAllPosts(1, 10, null, "Private");
             Assert.Equal(1, total);
+        }
+
+        [Fact]
+        public async Task GetAllPosts_ShouldIgnoreInvalidVisibility()
+        {
+            var user = SeedUser();
+            SeedPost(user.Id); SeedPost(user.Id);
+            var (_, total) = await _sut.GetAllPosts(1, 10, null, "InvalidValue");
+            Assert.Equal(2, total); // no filter applied
+        }
+
+        [Fact]
+        public async Task GetAllPosts_ShouldFilterBySearchQuery_InTitle()
+        {
+            var user = SeedUser();
+            SeedPost(user.Id, title: "Unique XYZ Title");
+            SeedPost(user.Id, title: "Other Post");
+            var (_, total) = await _sut.GetAllPosts(1, 10, "XYZ", null);
+            Assert.Equal(1, total);
+        }
+
+        [Fact]
+        public async Task GetAllPosts_ShouldPaginate_Correctly()
+        {
+            var user = SeedUser();
+            for (int i = 0; i < 5; i++) SeedPost(user.Id);
+            var (page1, total) = await _sut.GetAllPosts(1, 3, null, null);
+            var (page2, _)     = await _sut.GetAllPosts(2, 3, null, null);
+            Assert.Equal(5, total);
+            Assert.Equal(3, page1.Count);
+            Assert.Equal(2, page2.Count);
+        }
+
+        [Fact]
+        public async Task GetAllPosts_ShouldReturnEmpty_WhenNoPosts()
+        {
+            var (items, total) = await _sut.GetAllPosts(1, 10, null, null);
+            Assert.Equal(0, total);
+            Assert.Empty(items);
         }
     }
 }

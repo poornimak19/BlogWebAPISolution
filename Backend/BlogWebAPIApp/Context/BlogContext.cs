@@ -12,8 +12,7 @@ namespace BlogWebAPIApp.Context
         private readonly IHttpContextAccessor? _httpContextAccessor;
 
         // Primary constructor used by DI (includes HttpContextAccessor for audit logging)
-        public BlogContext(DbContextOptions<BlogContext> options, IHttpContextAccessor httpContextAccessor)
-            : base(options)
+        public BlogContext(DbContextOptions<BlogContext> options, IHttpContextAccessor httpContextAccessor): base(options)
         {
             _httpContextAccessor = httpContextAccessor;
         }

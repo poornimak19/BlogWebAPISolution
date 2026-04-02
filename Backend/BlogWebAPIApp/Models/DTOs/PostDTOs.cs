@@ -19,7 +19,7 @@ namespace BlogWebAPIApp.Models.DTOs
 
         public string? ContentMarkdown { get; set; }
 
-        /// <summary> "Public" | "Private" | "Restricted" </summary>
+        /// <summary> "Public" | "Private" </summary>
         [Required]
         public string Visibility { get; set; } = "Public";
 

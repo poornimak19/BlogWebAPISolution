@@ -86,9 +86,9 @@ namespace BlogWebAPIApp.Services
 
             var principal = tokenHandler.ValidateToken(token, parameters, out var validatedToken);
 
-            // Make sure it's a HS256 JWT
-            if (validatedToken is not JwtSecurityToken jwt
-                || !jwt.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.Ordinal))
+            // Make sure it's a HS256 JWT — check algorithm on the validated token
+            var jwtToken = validatedToken as JwtSecurityToken;
+            if (jwtToken == null || !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.Ordinal))
             {
                 throw new SecurityTokenException("Invalid reset token.");
             }
@@ -106,8 +106,5 @@ namespace BlogWebAPIApp.Services
 
             return userId;
         }
-
-
     }
-
 }

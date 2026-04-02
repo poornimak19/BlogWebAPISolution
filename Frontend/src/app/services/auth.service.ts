@@ -72,6 +72,7 @@ fetchMe(): Observable<MeResponseDto> {
   }
 
   logout(): void { this._clear(); this.router.navigate(['/']); }
+  
   getToken(): string | null { return localStorage.getItem('token'); }
 
   private _clear(): void {

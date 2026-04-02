@@ -13,15 +13,19 @@ namespace BlogAppTest.Services
     public class AuditLogServiceTests : IDisposable
     {
         private readonly BlogContext _db;
-        private readonly Mock<IHttpContextAccessor> _httpMock;
-        private readonly AuditLogService _sut;
+        private readonly InMemoryRepository<Guid, AuditLog> _logs;
+        private readonly InMemoryRepository<Guid, User>     _users;
+        private readonly Mock<IHttpContextAccessor>          _httpMock;
+        private readonly AuditLogService                     _sut;
 
         public AuditLogServiceTests()
         {
             _db       = TestDbContextFactory.Create();
+            _logs     = new InMemoryRepository<Guid, AuditLog>(_db);
+            _users    = new InMemoryRepository<Guid, User>(_db);
             _httpMock = new Mock<IHttpContextAccessor>();
             _httpMock.Setup(x => x.HttpContext).Returns((HttpContext?)null);
-            _sut = new AuditLogService(_db, _httpMock.Object);
+            _sut = new AuditLogService(_logs, _users, _httpMock.Object);
         }
 
         public void Dispose() => _db.Dispose();
@@ -39,16 +43,15 @@ namespace BlogAppTest.Services
                 PasswordHash = [],
                 Role         = role
             };
-            _db.Users.Add(user);
-            _db.SaveChanges();
+            _users.Seed([user]);
             return user;
         }
 
         private AuditLog SeedLog(
-            string action     = "Create",
-            string entity     = "Post",
-            string status     = "Success",
-            Guid?  userId     = null,
+            string    action    = "Create",
+            string    entity    = "Post",
+            string    status    = "Success",
+            Guid?     userId    = null,
             DateTime? timestamp = null)
         {
             var log = new AuditLog
@@ -61,8 +64,7 @@ namespace BlogAppTest.Services
                 Status     = status,
                 Timestamp  = timestamp ?? DateTime.UtcNow
             };
-            _db.AuditLogs.Add(log);
-            _db.SaveChanges();
+            _logs.Seed([log]);
             return log;
         }
 
@@ -78,17 +80,17 @@ namespace BlogAppTest.Services
             _httpMock.Setup(x => x.HttpContext).Returns(ctx);
         }
 
-        // ── LogAsync ──────────────────────────────────────────────────────────
+        // ── LogAsync — basic persistence ──────────────────────────────────────
 
         [Fact]
-        public async Task LogAsync_ShouldPersistAuditLog_WithProvidedFields()
+        public async Task LogAsync_ShouldPersistLog_WithAllProvidedFields()
         {
             await _sut.LogAsync("Login", "User", "abc123", description: "User logged in");
 
             var log = _db.AuditLogs.Single();
-            Assert.Equal("Login",        log.Action);
-            Assert.Equal("User",         log.EntityName);
-            Assert.Equal("abc123",       log.EntityId);
+            Assert.Equal("Login",          log.Action);
+            Assert.Equal("User",           log.EntityName);
+            Assert.Equal("abc123",         log.EntityId);
             Assert.Equal("User logged in", log.Description);
             Assert.Equal(AuditStatus.Success, log.Status);
         }
@@ -108,6 +110,29 @@ namespace BlogAppTest.Services
 
             Assert.Equal(AuditStatus.Failed, _db.AuditLogs.Single().Status);
         }
+
+        [Fact]
+        public async Task LogAsync_ShouldPersistOldAndNewValues()
+        {
+            await _sut.LogAsync("Update", "Post", "id1",
+                oldValues: "{\"title\":\"old\"}", newValues: "{\"title\":\"new\"}");
+
+            var log = _db.AuditLogs.Single();
+            Assert.Equal("{\"title\":\"old\"}", log.OldValues);
+            Assert.Equal("{\"title\":\"new\"}", log.NewValues);
+        }
+
+        [Fact]
+        public async Task LogAsync_ShouldSetTimestampToUtcNow()
+        {
+            var before = DateTime.UtcNow.AddSeconds(-1);
+            await _sut.LogAsync("Create", "Post", "id1");
+            var after = DateTime.UtcNow.AddSeconds(1);
+
+            Assert.InRange(_db.AuditLogs.Single().Timestamp, before, after);
+        }
+
+        // ── LogAsync — userId resolution ──────────────────────────────────────
 
         [Fact]
         public async Task LogAsync_ShouldUseExplicitUserId_WhenProvided()
@@ -132,35 +157,24 @@ namespace BlogAppTest.Services
         [Fact]
         public async Task LogAsync_ShouldSetNullUserId_WhenNoContextAndNoExplicitId()
         {
-            // HttpContext is null (default mock setup)
             await _sut.LogAsync("Create", "Comment", "id1");
 
             Assert.Null(_db.AuditLogs.Single().UserId);
         }
 
         [Fact]
-        public async Task LogAsync_ShouldPersistOldAndNewValues()
+        public async Task LogAsync_ShouldPreferExplicitUserId_OverHttpContext()
         {
-            await _sut.LogAsync("Update", "Post", "id1",
-                oldValues: "{\"title\":\"old\"}", newValues: "{\"title\":\"new\"}");
+            var contextUserId  = Guid.NewGuid();
+            var explicitUserId = Guid.NewGuid();
+            SetupHttpContext(contextUserId);
 
-            var log = _db.AuditLogs.Single();
-            Assert.Equal("{\"title\":\"old\"}", log.OldValues);
-            Assert.Equal("{\"title\":\"new\"}", log.NewValues);
+            await _sut.LogAsync("Create", "Post", "id1", userId: explicitUserId);
+
+            Assert.Equal(explicitUserId, _db.AuditLogs.Single().UserId);
         }
 
-        [Fact]
-        public async Task LogAsync_ShouldSetTimestampToUtcNow()
-        {
-            var before = DateTime.UtcNow.AddSeconds(-1);
-            await _sut.LogAsync("Create", "Post", "id1");
-            var after = DateTime.UtcNow.AddSeconds(1);
-
-            var ts = _db.AuditLogs.Single().Timestamp;
-            Assert.InRange(ts, before, after);
-        }
-
-        // ── GetLogsAsync — no filter ──────────────────────────────────────────
+        // ── GetLogsAsync — basic retrieval ────────────────────────────────────
 
         [Fact]
         public async Task GetLogsAsync_ShouldReturnAllLogs_WhenNoFilters()
@@ -272,7 +286,7 @@ namespace BlogAppTest.Services
             SeedLog(timestamp: now.AddDays(-1));
             SeedLog(timestamp: now);
 
-            var (items, total) = await _sut.GetLogsAsync(new AuditLogFilterDto
+            var (_, total) = await _sut.GetLogsAsync(new AuditLogFilterDto
             {
                 From = now.AddDays(-2), Page = 1, PageSize = 20
             });
@@ -288,7 +302,7 @@ namespace BlogAppTest.Services
             SeedLog(timestamp: now.AddDays(-1));
             SeedLog(timestamp: now);
 
-            var (items, total) = await _sut.GetLogsAsync(new AuditLogFilterDto
+            var (_, total) = await _sut.GetLogsAsync(new AuditLogFilterDto
             {
                 To = now.AddDays(-2), Page = 1, PageSize = 20
             });
@@ -304,7 +318,7 @@ namespace BlogAppTest.Services
             SeedLog(timestamp: now.AddDays(-3));
             SeedLog(timestamp: now);
 
-            var (items, total) = await _sut.GetLogsAsync(new AuditLogFilterDto
+            var (_, total) = await _sut.GetLogsAsync(new AuditLogFilterDto
             {
                 From = now.AddDays(-5), To = now.AddDays(-1), Page = 1, PageSize = 20
             });
@@ -353,6 +367,28 @@ namespace BlogAppTest.Services
         }
 
         [Fact]
+        public async Task GetLogsAsync_ShouldEnrichAdminRole_Correctly()
+        {
+            var admin = SeedUser(UserRole.Admin);
+            SeedLog(userId: admin.Id);
+
+            var (items, _) = await _sut.GetLogsAsync(new AuditLogFilterDto { Page = 1, PageSize = 20 });
+
+            Assert.Equal("Admin", items[0].UserRole);
+        }
+
+        [Fact]
+        public async Task GetLogsAsync_ShouldEnrichReaderRole_Correctly()
+        {
+            var reader = SeedUser(UserRole.Reader);
+            SeedLog(userId: reader.Id);
+
+            var (items, _) = await _sut.GetLogsAsync(new AuditLogFilterDto { Page = 1, PageSize = 20 });
+
+            Assert.Equal("Reader", items[0].UserRole);
+        }
+
+        [Fact]
         public async Task GetLogsAsync_ShouldSetNullUsernameAndRole_WhenUserIdIsNull()
         {
             SeedLog(userId: null);
@@ -364,9 +400,9 @@ namespace BlogAppTest.Services
         }
 
         [Fact]
-        public async Task GetLogsAsync_ShouldSetNullUsernameAndRole_WhenUserIdNotInDb()
+        public async Task GetLogsAsync_ShouldSetNullUsernameAndRole_WhenUserNotInDb()
         {
-            SeedLog(userId: Guid.NewGuid()); // user doesn't exist in Users table
+            SeedLog(userId: Guid.NewGuid()); // userId exists in log but not in Users table
 
             var (items, _) = await _sut.GetLogsAsync(new AuditLogFilterDto { Page = 1, PageSize = 20 });
 
@@ -375,7 +411,7 @@ namespace BlogAppTest.Services
         }
 
         [Fact]
-        public async Task GetLogsAsync_ShouldEnrichMultipleDistinctUsers()
+        public async Task GetLogsAsync_ShouldEnrichMultipleDistinctUsers_InOnePage()
         {
             var admin   = SeedUser(UserRole.Admin);
             var blogger = SeedUser(UserRole.Blogger);
@@ -388,6 +424,173 @@ namespace BlogAppTest.Services
             var bloggerLog = items.First(i => i.Username == blogger.Username);
             Assert.Equal("Admin",   adminLog.UserRole);
             Assert.Equal("Blogger", bloggerLog.UserRole);
+        }
+
+        [Fact]
+        public async Task GetLogsAsync_ShouldHandleMixedNullAndValidUserIds()
+        {
+            var user = SeedUser(UserRole.Reader);
+            SeedLog(userId: user.Id);
+            SeedLog(userId: null);
+
+            var (items, _) = await _sut.GetLogsAsync(new AuditLogFilterDto { Page = 1, PageSize = 20 });
+
+            Assert.Equal(2, items.Count);
+            var enriched = items.First(i => i.Username != null);
+            var anonymous = items.First(i => i.Username == null);
+            Assert.Equal(user.Username, enriched.Username);
+            Assert.Null(anonymous.Username);
+        }
+    }
+
+    // ── Additional branch coverage ────────────────────────────────────────────
+
+    public class AuditLogServiceBranchTests : IDisposable
+    {
+        private readonly BlogContext _db;
+        private readonly InMemoryRepository<Guid, AuditLog> _logs;
+        private readonly InMemoryRepository<Guid, User>     _users;
+        private readonly Mock<IHttpContextAccessor>          _httpMock;
+        private readonly AuditLogService                     _sut;
+
+        public AuditLogServiceBranchTests()
+        {
+            _db       = TestDbContextFactory.Create();
+            _logs     = new InMemoryRepository<Guid, AuditLog>(_db);
+            _users    = new InMemoryRepository<Guid, User>(_db);
+            _httpMock = new Mock<IHttpContextAccessor>();
+            _httpMock.Setup(x => x.HttpContext).Returns((HttpContext?)null);
+            _sut = new AuditLogService(_logs, _users, _httpMock.Object);
+        }
+
+        public void Dispose() => _db.Dispose();
+
+        // ── ResolveIpAddress: X-Forwarded-For single IP ───────────────────────
+
+        [Fact]
+        public async Task LogAsync_ShouldCaptureIpFromXForwardedFor_WhenHeaderPresent()
+        {
+            var ctx = new DefaultHttpContext();
+            ctx.Request.Headers["X-Forwarded-For"] = "203.0.113.5";
+            _httpMock.Setup(x => x.HttpContext).Returns(ctx);
+
+            await _sut.LogAsync("Login", "User", "id1");
+
+            Assert.Equal("203.0.113.5", _db.AuditLogs.Single().IpAddress);
+        }
+
+        // ── ResolveIpAddress: X-Forwarded-For multiple IPs (take first) ───────
+
+        [Fact]
+        public async Task LogAsync_ShouldTakeFirstIp_WhenXForwardedForHasMultiple()
+        {
+            var ctx = new DefaultHttpContext();
+            ctx.Request.Headers["X-Forwarded-For"] = "10.0.0.1, 192.168.1.1, 203.0.113.5";
+            _httpMock.Setup(x => x.HttpContext).Returns(ctx);
+
+            await _sut.LogAsync("Login", "User", "id1");
+
+            Assert.Equal("10.0.0.1", _db.AuditLogs.Single().IpAddress);
+        }
+
+        // ── ResolveIpAddress: no X-Forwarded-For, use RemoteIpAddress ─────────
+
+        [Fact]
+        public async Task LogAsync_ShouldUseRemoteIpAddress_WhenNoXForwardedFor()
+        {
+            var ctx = new DefaultHttpContext();
+            ctx.Connection.RemoteIpAddress = System.Net.IPAddress.Parse("192.168.0.1");
+            _httpMock.Setup(x => x.HttpContext).Returns(ctx);
+
+            await _sut.LogAsync("Login", "User", "id1");
+
+            Assert.Equal("192.168.0.1", _db.AuditLogs.Single().IpAddress);
+        }
+
+        // ── ResolveIpAddress: null context → null IpAddress ───────────────────
+
+        [Fact]
+        public async Task LogAsync_ShouldSetNullIpAddress_WhenContextIsNull()
+        {
+            // Default mock returns null HttpContext
+            await _sut.LogAsync("Create", "Post", "id1");
+
+            Assert.Null(_db.AuditLogs.Single().IpAddress);
+        }
+
+        // ── ResolveUserId: via "sub" claim fallback ───────────────────────────
+
+        [Fact]
+        public async Task LogAsync_ShouldResolveUserId_FromSubClaim_WhenNameIdentifierAbsent()
+        {
+            var userId = Guid.NewGuid();
+            var ctx    = new DefaultHttpContext();
+            // Use "sub" claim only — no ClaimTypes.NameIdentifier
+            var identity = new ClaimsIdentity([new Claim("sub", userId.ToString())]);
+            ctx.User = new ClaimsPrincipal(identity);
+            _httpMock.Setup(x => x.HttpContext).Returns(ctx);
+
+            await _sut.LogAsync("Login", "User", "id1");
+
+            Assert.Equal(userId, _db.AuditLogs.Single().UserId);
+        }
+
+        // ── ResolveUserId: non-GUID sub → null ───────────────────────────────
+
+        [Fact]
+        public async Task LogAsync_ShouldSetNullUserId_WhenSubClaimIsNotAGuid()
+        {
+            var ctx      = new DefaultHttpContext();
+            var identity = new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, "not-a-guid")]);
+            ctx.User     = new ClaimsPrincipal(identity);
+            _httpMock.Setup(x => x.HttpContext).Returns(ctx);
+
+            await _sut.LogAsync("Login", "User", "id1");
+
+            Assert.Null(_db.AuditLogs.Single().UserId);
+        }
+
+        // ── UserAgent captured from context ───────────────────────────────────
+
+        [Fact]
+        public async Task LogAsync_ShouldCaptureUserAgent_WhenContextPresent()
+        {
+            var ctx = new DefaultHttpContext();
+            ctx.Request.Headers["User-Agent"] = "Mozilla/5.0 TestBrowser";
+            _httpMock.Setup(x => x.HttpContext).Returns(ctx);
+
+            await _sut.LogAsync("Create", "Post", "id1");
+
+            Assert.Equal("Mozilla/5.0 TestBrowser", _db.AuditLogs.Single().UserAgent);
+        }
+
+        // ── UserAgent null when context is null ───────────────────────────────
+
+        [Fact]
+        public async Task LogAsync_ShouldSetNullUserAgent_WhenContextIsNull()
+        {
+            await _sut.LogAsync("Create", "Post", "id1");
+
+            Assert.Null(_db.AuditLogs.Single().UserAgent);
+        }
+
+        // ── GetLogsAsync: all filters null/empty → no filtering ───────────────
+
+        [Fact]
+        public async Task GetLogsAsync_ShouldApplyNoFilters_WhenAllFilterFieldsAreNullOrEmpty()
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                _logs.Seed([new AuditLog { Id = Guid.NewGuid(), Action = "Create", EntityName = "Post", EntityId = "x", Status = "Success", Timestamp = DateTime.UtcNow }]);
+            }
+
+            var (items, total) = await _sut.GetLogsAsync(new AuditLogFilterDto
+            {
+                UserId = null, Action = "", EntityName = "", Status = "", From = null, To = null,
+                Page = 1, PageSize = 20
+            });
+
+            Assert.Equal(3, total);
         }
     }
 }

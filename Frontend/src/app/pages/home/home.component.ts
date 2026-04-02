@@ -69,7 +69,7 @@ export class HomeComponent implements OnInit {
         if (this.selectedCats().length > 1)
           items = items.filter(p => this.selectedCats().every(s => p.categories.includes(s)));
         if (this.sort() === 'popular')
-          items = [...items].sort((a, b) => (b.likesCount ?? 0) - (a.likesCount ?? 0));
+          items = [...items].sort((a, b) => (b.likesCount ?? 0) - (a.likesCount ?? 0)); //null coleascing
         this.posts.set(items);
         this.total.set(r.total);
         this.loading.set(false);

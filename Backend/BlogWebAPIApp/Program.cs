@@ -70,7 +70,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt["Key"]!)),
 
             // Map "sub" → NameIdentifier and Role properly
-            NameClaimType = ClaimTypes.NameIdentifier, // we’ll read "sub" explicitly if needed
+            NameClaimType = ClaimTypes.NameIdentifier, 
             RoleClaimType = ClaimTypes.Role
         };
     });
