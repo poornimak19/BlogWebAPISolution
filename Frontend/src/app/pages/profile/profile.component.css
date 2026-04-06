@@ -72,9 +72,20 @@
 
 /* Drafts */
 .drafts-list { display: flex; flex-direction: column; }
-.draft-row   { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; border-bottom: 1px solid var(--border); gap: 16px; flex-wrap: wrap; }
-.draft-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0 0 4px; }
+.draft-row   { display: flex; align-items: flex-start; justify-content: space-between; padding: 18px 0; border-bottom: 1px solid var(--border); gap: 16px; flex-wrap: wrap; }
+.draft-row--rejected { background: rgba(239,68,68,0.04); border-radius: 10px; padding: 16px; border: 1px solid rgba(239,68,68,0.2); margin-bottom: 4px; }
+[data-theme="dark"] .draft-row--rejected { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.3); }
+.draft-info { flex: 1; min-width: 0; }
+.draft-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.draft-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0; }
 .draft-meta  { font-size: 0.8rem; color: var(--text-ghost); }
+.draft-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 100px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+.draft-badge--rejected { background: #fee2e2; color: #991b1b; }
+.draft-badge--pending  { background: #fef3c7; color: #92400e; }
+[data-theme="dark"] .draft-badge--rejected { background: #4c1414; color: #fca5a5; }
+[data-theme="dark"] .draft-badge--pending  { background: #451a03; color: #fcd34d; }
+.draft-rejected-note { font-size: 0.8rem; color: #b91c1c; margin: 6px 0 0; display: flex; align-items: center; gap: 5px; }
+[data-theme="dark"] .draft-rejected-note { color: #fca5a5; }
 .draft-actions { display: flex; gap: 8px; }
 .draft-btn   { padding: 6px 16px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.82rem; color: var(--text-muted); text-decoration: none; cursor: pointer; background: var(--bg-card); transition: all 0.15s; font-weight: 500; font-family: inherit; }
 .draft-btn:hover { border-color: var(--ink); color: var(--text-primary); }

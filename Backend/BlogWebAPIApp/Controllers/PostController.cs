@@ -261,9 +261,8 @@ namespace BlogWebAPIApp.Controllers
         }
 
 
-        // ====================================
+        
         // ✅ ADMIN: Get all pending posts
-        // ====================================
         [Authorize(Roles = "Admin")]
         [HttpGet("admin/pending")]
         public async Task<ActionResult<PagedResponseDto<PostSummaryDto>>> GetPendingPosts(
@@ -280,9 +279,7 @@ namespace BlogWebAPIApp.Controllers
             return Ok(payload);
         }
 
-        // ====================================
         // ✅ ADMIN: Approve post
-        // ====================================
         [Authorize(Roles = "Admin")]
         [HttpPut("{id:guid}/approve")]
         public async Task<IActionResult> AdminApprove(Guid id)
@@ -291,9 +288,7 @@ namespace BlogWebAPIApp.Controllers
             return Ok(new { message = "Post approved" });
         }
 
-        // ====================================
         // ✅ ADMIN: Reject post
-        // ====================================
         [Authorize(Roles = "Admin")]
         [HttpPut("{id:guid}/reject")]
         public async Task<IActionResult> AdminReject(Guid id)
@@ -302,9 +297,7 @@ namespace BlogWebAPIApp.Controllers
             return Ok(new { message = "Post rejected" });
         }
 
-        // ====================================
         // ✅ ADMIN: Delete any post
-        // ====================================
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id:guid}/admin-delete")]
         public async Task<IActionResult> AdminDelete(Guid id)
@@ -313,9 +306,7 @@ namespace BlogWebAPIApp.Controllers
             return Ok(new { message = "Post deleted by admin" });
         }
 
-        // ====================================
         // ✅ ADMIN: Get post stats
-        // ====================================
         [Authorize(Roles = "Admin")]
         [HttpGet("admin/stats")]
         public async Task<IActionResult> GetAdminStats()
@@ -324,9 +315,7 @@ namespace BlogWebAPIApp.Controllers
             return Ok(new { total, published, draft, pending });
         }
 
-        // ====================================
         // ✅ ADMIN: Get ALL posts (all statuses/visibility)
-        // ====================================
         [Authorize(Roles = "Admin")]
         [HttpGet("admin/all")]
         public async Task<ActionResult<PagedResponseDto<PostSummaryDto>>> GetAllPosts(

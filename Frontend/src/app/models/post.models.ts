@@ -14,6 +14,7 @@ export interface PostSummaryDto {
   coverImageUrl?: string;
   status: string;
   visibility: string;
+  isRejected: boolean;
   publishedAt?: string;
   createdAt: string;
   updatedAt: string;

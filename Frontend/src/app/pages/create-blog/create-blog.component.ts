@@ -141,7 +141,7 @@ removeCategory(name: string): void {
       next: post => {
         if (status === 'Published') {
           this.postSvc.publish(post.id).subscribe({
-            next: () => { this.toast.success('Story published! 🎉'); this.router.navigate(['/blog', post.slug]); this.saving.set(false); },
+            next: () => { this.toast.success('Story sent to admin review 🔗'); this.router.navigate(['/blog', post.slug]); this.saving.set(false); },
             error: () => { this.toast.info('Draft saved. Publish manually from My Posts.'); this.router.navigate(['/me']); this.saving.set(false); }
           });
         } else {

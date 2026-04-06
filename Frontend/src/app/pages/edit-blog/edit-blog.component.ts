@@ -111,7 +111,7 @@ export class EditBlogComponent implements OnInit {
       coverImageUrl :this.form.coverImageUrl,
       status
     }).subscribe({
-      next: p => { this.toast.success('Story updated!'); this.saving.set(false); this.router.navigate(['/blog', p.slug]); },
+      next: p => { this.toast.success('Story sent to admin review🔗!'); this.saving.set(false); this.router.navigate(['/blog', p.slug]); },
       error: e => { this.toast.error(e.error?.message || 'Update failed.'); this.saving.set(false); }
     });
   }

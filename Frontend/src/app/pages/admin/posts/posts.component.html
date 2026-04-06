@@ -23,13 +23,14 @@
 
             @if (post.coverImageUrl) {
               <img [src]="post.coverImageUrl" alt="" class="post-thumb" (error)="$any($event.target).style.display='none'"/>
-            } @else {
+            } 
+            @else {
               <div class="post-thumb-placeholder">{{ post.title[0]?.toUpperCase() }}</div>
             }
 
             <div class="post-info">
               <div class="post-meta-top">
-                <span class="badge {{ statusClass(post.status) }}">{{ post.status }}</span>
+                <!-- <span class="badge {{ statusClass(post.status) }}">{{ post.status }}</span> -->
                 @if (post.isRejected) { <span class="badge badge--danger">Rejected</span> }
                 <span class="post-vis">{{ post.visibility }}</span>
               </div>
@@ -50,7 +51,7 @@
             <div class="post-actions">
               <button class="act-btn act-btn--neutral" (click)="openPreview(post)">Preview</button>
               <button class="act-btn act-btn--success" (click)="approve(post)">Approve</button>
-              <!-- <button class="act-btn act-btn--warning" (click)="reject(post)">Reject</button> -->
+              <button class="act-btn act-btn--warning" (click)="reject(post)">Reject</button>
               <button class="act-btn act-btn--danger"  (click)="deletePost(post)">Delete</button>
             </div>
 

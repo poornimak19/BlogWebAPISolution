@@ -30,7 +30,7 @@ export class LoginModalComponent {
 
   onOverlay(e: MouseEvent): void {
     if ((e.target as HTMLElement).classList.contains('modal-overlay')) this.modal.close();
-  }
+  } //handles click outside the model
 
   login(): void {
     if (!this.loginData.emailOrUsername || !this.loginData.password) {

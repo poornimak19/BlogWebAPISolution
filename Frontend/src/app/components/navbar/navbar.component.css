@@ -32,15 +32,28 @@
   font-family: var(--font-serif);
   font-size: 1.45rem;
   font-weight: 700;
-  color: var(--text-primary);
   text-decoration: none;
   letter-spacing: -0.02em;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
   flex-shrink: 0;
 }
-.brand-dot { font-size: 0.45rem; }
+.brand-icon {
+  font-size: 1.1rem;
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.brand-text {
+  background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.brand-dot { font-size: 0.55rem; }
 
 /* Primary nav links */
 .nav-links {
@@ -58,7 +71,11 @@
   border-radius: 8px;
   transition: background 0.15s, color 0.15s;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
+.nav-link i { font-size: 0.9rem; }
 .nav-link:hover        { background: var(--bg-hover); color: var(--text-primary); }
 .nav-link--active      { color: var(--text-primary);  font-weight: 700; background: var(--bg-hover); }
 
@@ -116,6 +133,7 @@
   color: var(--text-muted);
   transition: background 0.2s, border-color 0.2s, color 0.2s;
   flex-shrink: 0;
+  font-size: 1rem;
 }
 .theme-toggle:hover {
   background: var(--bg-hover);
@@ -123,38 +141,42 @@
   border-color: var(--ink);
 }
 
-/* Write button */
 .btn-write {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 8px 18px;
-  background: var(--ink);
-  color: var(--ink-inv);
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
   border-radius: 100px;
   font-size: 0.86rem;
   font-weight: 600;
   text-decoration: none;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.15s;
   white-space: nowrap;
+  box-shadow: 0 2px 12px rgba(99,102,241,0.35);
 }
-.btn-write:hover { opacity: 0.82; }
+.btn-write:hover { opacity: 0.88; transform: translateY(-1px); }
 
 /* Guest welcome + sign-in */
 .nav-guest { font-size: 0.86rem; color: var(--text-ghost); }
 .btn-signin {
   padding: 8px 20px;
-  border: 1.5px solid var(--ink);
-  background: transparent;
-  color: var(--text-primary);
+  border: none;
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  color: #fff;
   border-radius: 100px;
   font-size: 0.86rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: opacity 0.2s, transform 0.15s;
   font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 12px rgba(99,102,241,0.3);
 }
-.btn-signin:hover { background: var(--ink); color: var(--ink-inv); }
+.btn-signin:hover { opacity: 0.88; transform: translateY(-1px); }
 
 /* ── User avatar + dropdown ── */
 .nav-user {
@@ -219,8 +241,10 @@
 }
 
 .dd-item {
-  display: block;
-  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
   font-size: 0.875rem;
   color: var(--text-primary);
   text-decoration: none;
@@ -232,6 +256,7 @@
   transition: background 0.15s;
   font-family: inherit;
 }
+.dd-item i { font-size: 0.9rem; color: var(--text-muted); }
 .dd-item:hover         { background: var(--bg-hover); }
 .dd-item--danger       { color: var(--color-danger); }
 .dd-divider {

@@ -49,8 +49,7 @@ namespace BlogWebAPIApp.Services
                 PasswordHash = key       // byte[]
             };
 
-            _userRepository.Add(user);
-            //await _db.SaveChangesAsync();
+            await _userRepository.Add(user);
 
             var token = _tokens.CreateToken(user.Id, user.Username, user.Role.ToString());
             return (user, token);

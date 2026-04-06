@@ -105,8 +105,28 @@
         @if (drafts().length > 0) {
           <div class="drafts-list">
             @for (post of drafts(); track post.id) {
-              <div class="draft-row">
-                <div><h4 class="draft-title">{{ post.title }}</h4><span class="draft-meta">Last edited {{ post.updatedAt | date:'MMM d, y' }}</span></div>
+              <div class="draft-row" [class.draft-row--rejected]="post.isRejected">
+                <div class="draft-info">
+                  <div class="draft-title-row">
+                    <h4 class="draft-title">{{ post.title }}</h4>
+                    @if (post.isRejected) {
+                      <span class="draft-badge draft-badge--rejected">
+                        <i class="bi bi-x-circle-fill"></i> Rejected
+                      </span>
+                    } @else {
+                      <span class="draft-badge draft-badge--pending">
+                        <i class="bi bi-hourglass-split"></i> Pending Review
+                      </span>
+                    }
+                  </div>
+                  <span class="draft-meta">Last edited {{ post.updatedAt | date:'MMM d, y' }}</span>
+                  @if (post.isRejected) {
+                    <p class="draft-rejected-note">
+                      <i class="bi bi-info-circle"></i>
+                      This post was rejected by an admin. Edit and resubmit for review.
+                    </p>
+                  }
+                </div>
                 <div class="draft-actions">
                   <a [routerLink]="['/edit', post.id]" class="draft-btn">Edit</a>
                   <button class="draft-btn draft-btn--del" (click)="deleteDraft(post)" type="button">Delete</button>

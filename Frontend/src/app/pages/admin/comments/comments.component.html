@@ -1,9 +1,12 @@
-<!-- <div class="admin-layout">
+<div class="admin-layout">
   <app-admin-nav/>
 
   <main class="admin-main">
     <div class="admin-page-header">
-      <h1 class="admin-page-title">Comments Moderation</h1>
+      <h1 class="admin-page-title">
+        <i class="bi bi-chat-dots-fill" style="color:#7c3aed"></i>
+        Comments Moderation
+      </h1>
       <p class="admin-page-sub">{{ total() }} pending comment{{ total() !== 1 ? 's' : '' }} awaiting review</p>
     </div>
 
@@ -13,7 +16,7 @@
       </div>
     } @else if (comments().length === 0) {
       <div class="admin-empty">
-        <div class="admin-empty-icon">✅</div>
+        <div class="admin-empty-icon"><i class="bi bi-check-circle-fill" style="color:#10b981;font-size:3rem"></i></div>
         <p>No pending comments. All clear!</p>
       </div>
     } @else {
@@ -22,34 +25,40 @@
           <div class="comment-row">
 
             <div class="comment-author">
-              <div class="ca-av">
-                {{ (comment.author?.username || '?')[0].toUpperCase() }}
-              </div>
+              <div class="ca-av">{{ (comment.author?.username || '?')[0].toUpperCase() }}</div>
               <div class="ca-info">
                 <p class="ca-name">{{ comment.author?.displayName || comment.author?.username || 'Anonymous' }}</p>
-                <p class="ca-handle">{{ comment.createdAt | date:'MMM d, y · h:mm a' }}</p>
+                <p class="ca-handle">
+                  <i class="bi bi-clock"></i>
+                  {{ comment.createdAt | date:'MMM d, y · h:mm a' }}
+                </p>
               </div>
             </div>
 
             <div class="comment-body">
               @if (comment.postTitle) {
                 <p class="comment-post-ref">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                  </svg>
+                  <i class="bi bi-file-earmark-text"></i>
                   On: <strong>{{ comment.postTitle }}</strong>
                 </p>
               }
               <p class="comment-text">{{ truncate(comment.content) }}</p>
-              <span class="badge badge--pending">{{ comment.status }}</span>
+              <span class="badge badge--pending">
+                <i class="bi bi-hourglass-split"></i> {{ comment.status }}
+              </span>
             </div>
 
             <div class="comment-actions">
-              <button class="act-btn act-btn--success" (click)="approve(comment)">Approve</button>
-              <button class="act-btn act-btn--danger"  (click)="deleteComment(comment)">Delete</button>
+              <button class="act-btn act-btn--success" (click)="approve(comment)">
+                <i class="bi bi-check-lg"></i> Approve
+              </button>
+              <button class="act-btn act-btn--danger" (click)="deleteComment(comment)">
+                <i class="bi bi-trash3"></i> Delete
+              </button>
               @if (comment.author) {
-                <button class="act-btn act-btn--warning" (click)="banCommenter(comment)">Ban User</button>
+                <button class="act-btn act-btn--warning" (click)="banCommenter(comment)">
+                  <i class="bi bi-slash-circle"></i> Ban User
+                </button>
               }
             </div>
 
@@ -58,4 +67,4 @@
       </div>
     }
   </main>
-</div> -->
+</div>

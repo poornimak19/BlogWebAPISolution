@@ -217,6 +217,14 @@ namespace BlogWebAPIApp.Services
             }
 
             post.UpdatedAt = DateTime.UtcNow;
+
+            // Re-submit for admin approval whenever a published post is edited
+            if (post.Status == PostStatus.Published)
+            {
+                post.Status = PostStatus.Draft;
+                post.IsRejected = false;
+            }
+
             await _posts.SaveChangesAsync();
 
             return post;

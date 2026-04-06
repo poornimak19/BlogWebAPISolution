@@ -59,7 +59,7 @@
 
             <div class="post-info">
               <div class="post-meta-top">
-                <span class="badge {{ statusClass(post.status) }}">{{ post.status }}</span>
+                <!-- <span class="badge {{ statusClass(post.status) }}">{{ post.status }}</span> -->
                 <span class="badge" [class.badge--warning]="post.visibility === 'Private'" [class.badge--info]="post.visibility !== 'Private'">
                   {{ post.visibility }}
                 </span>

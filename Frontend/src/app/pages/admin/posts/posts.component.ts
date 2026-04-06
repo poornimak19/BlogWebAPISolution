@@ -1,6 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AdminService } from '../../../services/admin.service';
 import { ToastService } from '../../../services/ui.services';
@@ -12,7 +11,7 @@ import { PostDetailDto } from '../../../models/post.models';
 @Component({
   selector: 'app-admin-posts',
   standalone: true,
-  imports: [DatePipe, RouterLink, AdminNavComponent],
+  imports: [DatePipe, AdminNavComponent],
   templateUrl: './posts.component.html',
   styleUrls: ['./posts.component.css']
 })

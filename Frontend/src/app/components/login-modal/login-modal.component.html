@@ -30,7 +30,7 @@
           </div>
           @if (error()) { <div class="form-error" role="alert">{{ error() }}</div> }
           <button type="submit" class="btn-primary" [disabled]="busy()">{{ busy() ? 'Signing in…' : 'Sign In' }}</button>
-          <button type="button" class="btn-link" (click)="switchTab('forgot')">Forgot password?</button>
+          <!-- <button type="button" class="btn-link" (click)="switchTab('forgot')">Forgot password?</button> -->
         </form>
       }
 
@@ -59,8 +59,8 @@
           <div class="form-group">
             <label for="r-role">Account type</label>
             <select id="r-role" [(ngModel)]="registerData.role" name="role">
-              <option value="Reader">Reader — browse &amp; comment</option>
-              <option value="Blogger">Blogger — write &amp; read</option>
+              <option value="Reader">Reader — browse & comment</option>
+              <option value="Blogger">Blogger — write & read</option>
             </select>
           </div>
           @if (error()) { <div class="form-error" role="alert">{{ error() }}</div> }
