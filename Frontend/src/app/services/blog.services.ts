@@ -99,6 +99,12 @@ export class UserService {
     return this.http.put<UserProfileDto>(`${this.base}/me/profile`, dto).pipe(catchError(e => throwError(() => e)));
   }
 
+  uploadAvatar(file: File): Observable<{ url: string }> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<{ url: string }>(`${this.base}/me/avatar`, fd).pipe(catchError(e => throwError(() => e)));
+  }
+
   searchUsers(q: string): Observable<UserSearchDto[]> {
   return this.http.get<UserSearchDto[]>(`${this.base}/search`, { params: new HttpParams().set('q', q) } ).pipe(catchError(e => throwError(() => e)));
 }

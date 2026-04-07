@@ -30,6 +30,7 @@ namespace BlogWebAPIApp.Models.DTOs
         string? DisplayName,
         string Email,
         string Role,
+        string? AvatarUrl,
         bool IsPremiumSubscriber,
         DateTime? PremiumExpiresAt
     );

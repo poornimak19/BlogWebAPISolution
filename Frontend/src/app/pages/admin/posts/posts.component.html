@@ -89,6 +89,21 @@
           </div>
           <h2 class="preview-title">{{ p.title }}</h2>
           @if (p.excerpt) { <p class="preview-excerpt">{{ p.excerpt }}</p> }
+
+          @if (p.audioUrl) {
+            <div class="preview-media">
+              <p class="preview-media-label"><i class="bi bi-music-note-beamed"></i> Audio</p>
+              <audio controls [src]="mediaUrl(p.audioUrl)" class="preview-audio" preload="metadata"></audio>
+            </div>
+          }
+
+          @if (p.videoUrl) {
+            <div class="preview-media">
+              <p class="preview-media-label"><i class="bi bi-play-circle"></i> Video</p>
+              <video controls [src]="mediaUrl(p.videoUrl)" class="preview-video" preload="metadata"></video>
+            </div>
+          }
+
           <div class="preview-content" [innerHTML]="p.contentHtml"></div>
         </div>
 

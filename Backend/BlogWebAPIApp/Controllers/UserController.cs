@@ -78,9 +78,40 @@ namespace BlogWebAPIApp.Controllers
         }
         #endregion
 
-        // =======================
-        // ✅ ADMIN: Get ALL users
-        // =======================
+        // AUTH: Upload avatar from file manager
+        #region Upload avatar
+        [Authorize]
+        [HttpPost("me/avatar")]
+        [RequestSizeLimit(5 * 1024 * 1024)] // 5 MB
+        public async Task<IActionResult> UploadAvatar(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { message = "No file provided." });
+
+            var allowed = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+            if (!allowed.Contains(file.ContentType.ToLower()))
+                return BadRequest(new { message = "Only JPG, PNG, GIF or WebP images are allowed." });
+
+            var folder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "avatars");
+            Directory.CreateDirectory(folder);
+
+            var ext      = Path.GetExtension(file.FileName);
+            var fileName = $"{Guid.NewGuid()}{ext}";
+            var filePath = Path.Combine(folder, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+                await file.CopyToAsync(stream);
+
+            var url = $"/uploads/avatars/{fileName}";
+
+            // Persist the URL on the user record
+            var userId = User.GetUserId();
+            if (userId is null) return Unauthorized();
+            await _users.UpdateProfile(userId.Value, null, null, url);
+
+            return Ok(new { url });
+        }
+        #endregion
         [Authorize(Roles = "Admin")]
         [HttpGet("admin/all")]
         public async Task<ActionResult<IEnumerable<UserAdminDto>>> GetAllUsers()

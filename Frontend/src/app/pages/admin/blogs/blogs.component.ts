@@ -9,6 +9,8 @@ import { AdminNavComponent } from '../../../components/admin-nav/admin-nav.compo
 import { environment } from '../../../../environments/environment';
 import { PostDetailDto } from '../../../models/post.models';
 
+const mediaBase = environment.apiUrl.replace('/api', '');
+
 @Component({
   selector: 'app-admin-blogs',
   standalone: true,
@@ -58,6 +60,10 @@ export class AdminBlogsComponent implements OnInit {
   }
 
   closePreview(): void { this.previewPost.set(null); }
+
+  mediaUrl(url: string): string {
+    return url.startsWith('http') ? url : `${mediaBase}${url}`;
+  }
 
   deletePost(post: AdminPostDto): void {
     if (!confirm(`Permanently delete "${post.title}"?`)) return;

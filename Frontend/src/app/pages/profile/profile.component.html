@@ -18,13 +18,10 @@
 
           <div class="profile-info">
             <h1 class="profile-name">{{ profile()!.displayName || profile()!.username }}</h1>
-            <p class="profile-handle">@`{{ profile()!.username }}</p>
+            <p class="profile-handle">@{{ profile()!.username }}</p>
 
             <!-- Role + Premium badges -->
             <div class="profile-badges">
-              <span class="role-badge role-badge--{{ (profile()!.role || 'reader').toLowerCase() }}">
-                {{ profile()!.role || 'Reader' }}
-              </span>
               @if (isOwnProfile() && isPremium()) {
                 <span class="premium-member-badge">👑 Premium Member</span>
               }
@@ -206,7 +203,7 @@
               <!-- Preview: image or letter -->
               <div class="av-preview-wrap">
                 @if (avatarPreview() || ef.avatarUrl) {
-                  <img [src]="avatarPreview() || ef.avatarUrl" class="av-preview-img" alt="Avatar preview" (error)="clearAvatar()"/>
+                  <img [src]="avatarPreview() || (ef.avatarUrl.startsWith('http') ? ef.avatarUrl : mediaBase + ef.avatarUrl)" class="av-preview-img" alt="Avatar preview" (error)="clearAvatar()"/>
                 } @else {
                   <div class="av-preview-letter">{{ avatarLetter() }}</div>
                 }

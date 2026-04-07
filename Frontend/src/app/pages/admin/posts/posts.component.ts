@@ -8,6 +8,8 @@ import { AdminNavComponent } from '../../../components/admin-nav/admin-nav.compo
 import { environment } from '../../../../environments/environment';
 import { PostDetailDto } from '../../../models/post.models';
 
+const mediaBase = environment.apiUrl.replace('/api', '');
+
 @Component({
   selector: 'app-admin-posts',
   standalone: true,
@@ -49,6 +51,10 @@ export class AdminPostsComponent implements OnInit {
   }
 
   closePreview(): void { this.previewPost.set(null); }
+
+  mediaUrl(url: string): string {
+    return url.startsWith('http') ? url : `${mediaBase}${url}`;
+  }
 
   approve(post: AdminPostDto): void {
     this.adminSvc.approvePost(post.id).subscribe({

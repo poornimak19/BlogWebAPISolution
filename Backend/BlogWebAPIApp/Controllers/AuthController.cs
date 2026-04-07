@@ -103,6 +103,7 @@ namespace BlogWebAPIApp.Controllers
                 DisplayName: user.DisplayName,
                 Email: user.Email,
                 Role: role ?? user.Role.ToString(),
+                AvatarUrl: user.AvatarUrl,
                 IsPremiumSubscriber: user.IsPremiumSubscriber && (user.PremiumExpiresAt == null || user.PremiumExpiresAt > DateTime.UtcNow),
                 PremiumExpiresAt: user.PremiumExpiresAt
             ));

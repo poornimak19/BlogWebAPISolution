@@ -2,6 +2,7 @@ import { Component, inject, signal, HostListener, ElementRef, computed } from '@
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { LoginModalService, ThemeService } from '../../services/ui.services';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-navbar',
@@ -49,9 +50,12 @@ export class NavbarComponent {
     return this.displayName[0]?.toUpperCase() ?? '?';
   }
 
+  private readonly mediaBase = environment.apiUrl.replace('/api', '');
+
   get avatarUrl(): string | undefined {
     const url = this.auth.currentUser()?.avatarUrl;
-    return url && url.trim() ? url : undefined;
+    if (!url || !url.trim()) return undefined;
+    return url.startsWith('http') ? url : `${this.mediaBase}${url}`;
   }
 
   /** Toggle open/close; stop propagation so document:click doesn't immediately close it */

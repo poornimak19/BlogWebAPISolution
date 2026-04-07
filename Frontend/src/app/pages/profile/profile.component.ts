@@ -9,6 +9,7 @@ import { ToastService } from '../../services/ui.services';
 import { UserProfileDto } from '../../models/blog.models';
 import { PostSummaryDto } from '../../models/post.models';
 import { PostCardComponent } from '../../components/post-card/post-card.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-profile',
@@ -50,9 +51,12 @@ export class ProfileComponent implements OnInit {
     return (p?.displayName || p?.username || '?')[0].toUpperCase();
   });
 
+  readonly mediaBase = environment.apiUrl.replace('/api', '');
+
   avatarSrc = computed(() => {
-    // Priority: local preview > saved URL > null (show letter)
-    return this.avatarPreview() || this.profile()?.avatarUrl || '';
+    const url = this.avatarPreview() || this.profile()?.avatarUrl || '';
+    if (!url) return '';
+    return url.startsWith('data:') || url.startsWith('http') ? url : `${this.mediaBase}${url}`;
   });
 
   publishedCount = computed(() => this.posts().length);
@@ -128,13 +132,21 @@ export class ProfileComponent implements OnInit {
     if (!file) return;
     if (!file.type.startsWith('image/')) { this.toast.error('Please select an image file.'); return; }
     if (file.size > 5 * 1024 * 1024) { this.toast.error('Image must be under 5 MB.'); return; }
+
+    // Show local preview immediately
     const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      this.avatarPreview.set(dataUrl);
-      this.ef.avatarUrl = dataUrl;   // store base64 in avatarUrl field for save
-    };
+    reader.onload = () => this.avatarPreview.set(reader.result as string);
     reader.readAsDataURL(file);
+
+    // Upload to server right away
+    this.userSvc.uploadAvatar(file).subscribe({
+      next: r => {
+        this.ef.avatarUrl = r.url;
+        this.toast.success('Photo uploaded.');
+        this.auth.fetchMe().subscribe(); // refresh navbar
+      },
+      error: () => this.toast.error('Avatar upload failed.')
+    });
   }
 
   clearAvatar(): void { this.avatarPreview.set(''); this.ef.avatarUrl = ''; }
@@ -152,6 +164,7 @@ export class ProfileComponent implements OnInit {
         this.editMode.set(false);
         this.saving.set(false);
         this.toast.success('Profile updated!');
+        this.auth.fetchMe().subscribe(); // keep navbar in sync
       },
       error: () => { this.toast.error('Update failed.'); this.saving.set(false); }
     });
