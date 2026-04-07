@@ -76,6 +76,50 @@
         }
       </div>
 
+      <!-- Audio Upload -->
+      <div class="side-sec">
+        <h4 class="side-label">Audio</h4>
+        @if (!audioUrl()) {
+          <label class="media-drop" [class.media-drop--busy]="audioUploading()">
+            <input type="file" accept="audio/*" class="media-file-input" (change)="onAudioSelected($event)" [disabled]="audioUploading()"/>
+            <span class="media-drop-icon">🎵</span>
+            <span class="media-drop-text">{{ audioUploading() ? 'Uploading…' : 'Click to upload audio' }}</span>
+            <span class="media-drop-hint">MP3, WAV, OGG, WEBM</span>
+          </label>
+        } @else {
+          <div class="media-preview-box">
+            <div class="media-preview-info">
+              <span class="media-preview-icon">🎵</span>
+              <span class="media-preview-name">{{ audioFileName() }}</span>
+            </div>
+            <audio controls [src]="'http://localhost:5034' + audioUrl()!" class="media-player"></audio>
+            <button type="button" class="media-remove-btn" (click)="removeAudio()">✕ Remove</button>
+          </div>
+        }
+      </div>
+
+      <!-- Video Upload -->
+      <div class="side-sec">
+        <h4 class="side-label">Video</h4>
+        @if (!videoUrl()) {
+          <label class="media-drop" [class.media-drop--busy]="videoUploading()">
+            <input type="file" accept="video/*" class="media-file-input" (change)="onVideoSelected($event)" [disabled]="videoUploading()"/>
+            <span class="media-drop-icon">🎬</span>
+            <span class="media-drop-text">{{ videoUploading() ? 'Uploading…' : 'Click to upload video' }}</span>
+            <span class="media-drop-hint">MP4, WEBM, OGG, MOV</span>
+          </label>
+        } @else {
+          <div class="media-preview-box">
+            <div class="media-preview-info">
+              <span class="media-preview-icon">🎬</span>
+              <span class="media-preview-name">{{ videoFileName() }}</span>
+            </div>
+            <video controls [src]="'http://localhost:5034' + videoUrl()!" class="media-player"></video>
+            <button type="button" class="media-remove-btn" (click)="removeVideo()">✕ Remove</button>
+          </div>
+        }
+      </div>
+
       <div class="side-sec">
         <h4 class="side-label">Tags</h4>
         <input type="text" [(ngModel)]="tagInput" name="ti" placeholder="Type and press Enter" class="side-input" (keydown.enter)="addTag($event)"/>
@@ -151,6 +195,17 @@
         <label class="toggle-row"><input type="checkbox" [(ngModel)]="form.commentsEnabled" name="ce"/><span>Enable comments</span></label>
         @if (form.commentsEnabled) {
           <label class="toggle-row"><input type="checkbox" [(ngModel)]="form.autoApprove" name="aa"/><span>Auto-approve</span></label>
+        }
+      </div>
+
+      <div class="side-sec">
+        <h4 class="side-label">Premium</h4>
+        <label class="toggle-row">
+          <input type="checkbox" [(ngModel)]="form.isPremium" name="premium"/>
+          <span>Premium content</span>
+        </label>
+        @if (form.isPremium) {
+          <p class="premium-hint">👑 Free readers get 2 premium reads/month. After that, only the first 100 characters are shown.</p>
         }
       </div>
     </aside>

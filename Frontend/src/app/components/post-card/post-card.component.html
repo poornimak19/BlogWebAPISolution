@@ -5,6 +5,11 @@
     <div class="badge-featured">⭐ Featured for you</div>
   }
 
+  <!-- 👑 Premium badge -->
+  @if (post.isPremium) {
+    <div class="badge-premium">👑 Premium</div>
+  }
+
   <!-- Cover image -->
   <a [routerLink]="['/blog', post.slug]" class="card-cover-link" tabindex="-1" aria-hidden="true">
     @if (hasCover) {

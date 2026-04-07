@@ -29,7 +29,9 @@ namespace BlogWebAPIApp.Models.DTOs
         string Username,
         string? DisplayName,
         string Email,
-        string Role
+        string Role,
+        bool IsPremiumSubscriber,
+        DateTime? PremiumExpiresAt
     );
 
 }

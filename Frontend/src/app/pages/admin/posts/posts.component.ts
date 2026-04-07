@@ -65,13 +65,13 @@ export class AdminPostsComponent implements OnInit {
     });
   }
 
-  deletePost(post: AdminPostDto): void {
-    if (!confirm(`Permanently delete "${post.title}"?`)) return;
-    this.adminSvc.adminDeletePost(post.id).subscribe({
-      next: () => { this.posts.update(list => list.filter(p => p.id !== post.id)); this.total.update(v => v - 1); this.toast.success('Post deleted.'); },
-      error: () => this.toast.error('Failed to delete.')
-    });
-  }
+  // deletePost(post: AdminPostDto): void {
+  //   if (!confirm(`Permanently delete "${post.title}"?`)) return;
+  //   this.adminSvc.adminDeletePost(post.id).subscribe({
+  //     next: () => { this.posts.update(list => list.filter(p => p.id !== post.id)); this.total.update(v => v - 1); this.toast.success('Post deleted.'); },
+  //     error: () => this.toast.error('Failed to delete.')
+  //   });
+  // }
 
   statusClass(status: string): string {
     return ({ Published: 'badge--success', Draft: 'badge--neutral', Archived: 'badge--warning' })[status] ?? 'badge--neutral';

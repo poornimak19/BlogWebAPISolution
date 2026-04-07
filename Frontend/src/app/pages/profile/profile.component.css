@@ -131,3 +131,62 @@
 .profile-404 a  { color: var(--color-info); }
 
 @media (max-width: 640px) { .ph-inner { flex-direction: column; } .ph-actions { width: 100%; } .posts-grid { grid-template-columns: 1fr; } }
+
+/* ── Premium profile buttons ── */
+.btn-action--premium {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  color: #fff !important; border-color: transparent !important;
+  text-decoration: none;
+}
+.btn-action--upgrade {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: #fff !important; border-color: transparent !important;
+  text-decoration: none;
+}
+
+/* ── Profile badges row ── */
+.profile-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.role-badge { display: inline-block; padding: 3px 10px; border-radius: 100px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.role-badge--reader  { background: #e8f0fe; color: #3b5bdb; }
+.role-badge--blogger { background: #d1fae5; color: #065f46; }
+.role-badge--admin   { background: #fef3c7; color: #92400e; }
+[data-theme="dark"] .role-badge--reader  { background: #1e2d6b; color: #93b4fc; }
+[data-theme="dark"] .role-badge--blogger { background: #064e3b; color: #6ee7b7; }
+[data-theme="dark"] .role-badge--admin   { background: #4c2a04; color: #fcd34d; }
+
+.premium-member-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 100px; font-size: 0.72rem; font-weight: 700;
+  background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e;
+  border: 1px solid #f59e0b;
+}
+
+/* ── Membership card ── */
+.membership-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 18px 22px; border-radius: 14px; margin-bottom: 28px; flex-wrap: wrap;
+}
+.membership-card--premium {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1.5px solid #34d399;
+}
+.membership-card--free {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+}
+.mc-left { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
+.mc-icon { font-size: 2rem; flex-shrink: 0; }
+.mc-title { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin: 0 0 3px; }
+.mc-sub   { font-size: 0.82rem; color: var(--text-muted); margin: 0; }
+.mc-expiry{ font-size: 0.78rem; color: #059669; margin: 4px 0 0; font-weight: 600; }
+.mc-btn {
+  display: inline-flex; align-items: center; padding: 9px 20px; border-radius: 100px;
+  font-size: 0.85rem; font-weight: 700; text-decoration: none; white-space: nowrap;
+  transition: opacity 0.2s; flex-shrink: 0;
+}
+.mc-btn--manage  { background: #1a1a1a; color: #fff; }
+.mc-btn--manage:hover { opacity: 0.82; }
+.mc-btn--upgrade {
+  background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;
+}
+.mc-btn--upgrade:hover { opacity: 0.88; }

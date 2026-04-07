@@ -47,7 +47,10 @@ namespace BlogWebAPIApp.Controllers
                     categoryNames: dto.CategoryNames,                   
                     commentsEnabled: dto.CommentsEnabled,
                     autoApproveComments: dto.AutoApproveComments,
-                    coverImageUrl:dto.CoverImageUrl
+                    coverImageUrl: dto.CoverImageUrl,
+                    audioUrl: dto.AudioUrl,
+                    videoUrl: dto.VideoUrl,
+                    isPremium: dto.IsPremium
                 );
 
                 return CreatedAtAction(nameof(GetBySlug), new { slug = post.Slug }, post.ToDetailDto());
@@ -86,7 +89,10 @@ namespace BlogWebAPIApp.Controllers
                     commentsEnabled: dto.CommentsEnabled,
                     autoApproveComments: dto.AutoApproveComments,
                     status: dto.Status,
-                    coverImageUrl:dto.CoverImageUrl
+                    coverImageUrl: dto.CoverImageUrl,
+                    audioUrl: dto.AudioUrl,
+                    videoUrl: dto.VideoUrl,
+                    isPremium: dto.IsPremium
                 );
 
                 return Ok(post.ToDetailDto());
@@ -328,6 +334,37 @@ namespace BlogWebAPIApp.Controllers
             return Ok(new PagedResponseDto<PostSummaryDto>(
                 items.Select(p => p.ToSummaryDto()).ToList(),
                 total, page, pageSize));
+        }
+
+        // Upload audio or video file — returns a relative URL
+        [Authorize(Policy = "BloggerOnly")]
+        [HttpPost("upload-media")]
+        [RequestSizeLimit(200 * 1024 * 1024)] // 200 MB
+        public async Task<IActionResult> UploadMedia(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { message = "No file provided." });
+
+            var allowedTypes = new[]
+            {
+                "audio/mpeg", "audio/mp3", "audio/wav", "audio/ogg", "audio/webm",
+                "video/mp4", "video/webm", "video/ogg", "video/quicktime"
+            };
+
+            if (!allowedTypes.Contains(file.ContentType.ToLower()))
+                return BadRequest(new { message = "Only audio and video files are allowed." });
+
+            var folder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "media");
+            Directory.CreateDirectory(folder);
+
+            var ext      = Path.GetExtension(file.FileName);
+            var fileName = $"{Guid.NewGuid()}{ext}";
+            var filePath = Path.Combine(folder, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+                await file.CopyToAsync(stream);
+
+            return Ok(new { url = $"/uploads/media/{fileName}" });
         }
 
     }

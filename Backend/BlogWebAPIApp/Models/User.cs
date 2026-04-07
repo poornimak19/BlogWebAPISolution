@@ -61,6 +61,9 @@ namespace BlogWebAPIApp.Models
         public bool IsSuspended { get; set; } = false;
         public bool CanComment { get; set; } = true;
 
-
+        // Premium subscription
+        public bool IsPremiumSubscriber { get; set; } = false;
+        public DateTime? PremiumExpiresAt { get; set; }
+        public ICollection<PremiumReadLog> PremiumReadLogs { get; set; } = new List<PremiumReadLog>();
     }
 }

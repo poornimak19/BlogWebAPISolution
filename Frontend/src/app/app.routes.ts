@@ -34,6 +34,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent)
   },
   {
+    path: 'premium',
+    loadComponent: () => import('./pages/premium/premium.component').then(m => m.PremiumComponent)
+  },
+  {
     path: 'reset-password',
     loadComponent: () => import('./pages/reset-password/reset-password.component').then(m => m.ResetPasswordComponent)
   },

@@ -43,6 +43,7 @@ export class ProfileComponent implements OnInit {
   });
   isReader  = computed(() => this.auth.userRole() === 'Reader');
   isBlogger = computed(() => this.auth.userRole() === 'Blogger' || this.auth.userRole() === 'Admin');
+  isPremium = computed(() => this.auth.isPremium());
 
   avatarLetter = computed(() => {
     const p = this.profile();

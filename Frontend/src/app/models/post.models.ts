@@ -12,6 +12,9 @@ export interface PostSummaryDto {
   slug: string;
   excerpt?: string;
   coverImageUrl?: string;
+  audioUrl?: string;
+  videoUrl?: string;
+  isPremium: boolean;
   status: string;
   visibility: string;
   isRejected: boolean;
@@ -32,6 +35,9 @@ export interface PostDetailDto {
   contentHtml: string;
   contentMarkdown?: string;
   coverImageUrl?: string;
+  audioUrl?: string;
+  videoUrl?: string;
+  isPremium: boolean;
   status: string;
   visibility: string;
   commentsEnabled: boolean;
@@ -58,7 +64,10 @@ export interface CreatePostRequestDto {
   allowedUserIds?: string[];
   commentsEnabled?: boolean;
   autoApproveComments?: boolean;
-  coverImageUrl?: string;              //coverimage
+  coverImageUrl?: string;
+  audioUrl?: string;
+  videoUrl?: string;
+  isPremium?: boolean;
 }
 
 export interface UpdatePostRequestDto {
@@ -74,7 +83,10 @@ export interface UpdatePostRequestDto {
   commentsEnabled?: boolean;
   autoApproveComments?: boolean;
   status?: string;
-  coverImageUrl?: string | null;           //coverimage
+  coverImageUrl?: string | null;
+  audioUrl?: string | null;
+  videoUrl?: string | null;
+  isPremium?: boolean;
 }
 
 export interface PagedResponseDto<T> {

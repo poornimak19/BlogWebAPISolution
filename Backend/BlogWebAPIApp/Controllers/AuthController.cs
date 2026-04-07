@@ -102,7 +102,9 @@ namespace BlogWebAPIApp.Controllers
                 Username: user.Username,
                 DisplayName: user.DisplayName,
                 Email: user.Email,
-                Role: role ?? user.Role.ToString()
+                Role: role ?? user.Role.ToString(),
+                IsPremiumSubscriber: user.IsPremiumSubscriber && (user.PremiumExpiresAt == null || user.PremiumExpiresAt > DateTime.UtcNow),
+                PremiumExpiresAt: user.PremiumExpiresAt
             ));
         }
         #endregion

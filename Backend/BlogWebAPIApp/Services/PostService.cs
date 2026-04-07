@@ -38,7 +38,10 @@ namespace BlogWebAPIApp.Services
             IEnumerable<string>? categoryNames,
             bool? commentsEnabled,
             bool? autoApproveComments,
-            string coverImageUrl)
+            string coverImageUrl,
+            string? audioUrl,
+            string? videoUrl,
+            bool isPremium)
         {
             var author = await _users.Get(authorId)
                 ?? throw new InvalidOperationException("Author not found");
@@ -61,6 +64,9 @@ namespace BlogWebAPIApp.Services
                 ContentHtml = contentHtml,
                 ContentMarkdown = contentMarkdown,
                 CoverImageUrl = coverImageUrl,
+                AudioUrl = audioUrl,
+                VideoUrl = videoUrl,
+                IsPremium = isPremium,
                 Visibility =  System.Enum.Parse<Visibility>(visibility, true),
                 CommentsEnabled = commentsEnabled ?? true,
                 AutoApproveComments = autoApproveComments ?? true,
@@ -146,7 +152,10 @@ namespace BlogWebAPIApp.Services
             bool? commentsEnabled,
             bool? autoApproveComments,
             string? status,
-            string coverImageUrl)
+            string coverImageUrl,
+            string? audioUrl,
+            string? videoUrl,
+            bool? isPremium)
         {
             var post = await _posts.GetQueryable()
                 .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
@@ -178,6 +187,15 @@ namespace BlogWebAPIApp.Services
 
             if (coverImageUrl != null)
                 post.CoverImageUrl = coverImageUrl;
+
+            if (audioUrl != null)
+                post.AudioUrl = audioUrl;
+
+            if (videoUrl != null)
+                post.VideoUrl = videoUrl;
+
+            if (isPremium.HasValue)
+                post.IsPremium = isPremium.Value;
 
             // Tags
             if (tagNames != null)
