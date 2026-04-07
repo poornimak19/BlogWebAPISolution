@@ -47,9 +47,15 @@ namespace BlogWebAPIApp.Controllers
         public async Task<ActionResult<TagDto>> EnsureTag([FromBody] CreateTagRequestDto dto)
         {
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
-
-            var tag = await _taxonomy.EnsureTag(dto.Name);
-            return Ok(tag.ToDto());
+            try
+            {
+                var tag = await _taxonomy.EnsureTag(dto.Name);
+                return Ok(tag.ToDto());
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
         #endregion
 
@@ -61,9 +67,15 @@ namespace BlogWebAPIApp.Controllers
         public async Task<ActionResult<CategoryDto>> EnsureCategory([FromBody] CreateCategoryRequestDto dto)
         {
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
-
-            var category = await _taxonomy.EnsureCategory(dto.Name);
-            return Ok(category.ToDto());
+            try
+            {
+                var category = await _taxonomy.EnsureCategory(dto.Name);
+                return Ok(category.ToDto());
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
         #endregion
 

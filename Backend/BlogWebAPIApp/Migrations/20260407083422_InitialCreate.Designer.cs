@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BlogWebAPIApp.Migrations
 {
     [DbContext(typeof(BlogContext))]
-    [Migration("20260406172754_fixPremiumReadLogIndex")]
-    partial class fixPremiumReadLogIndex
+    [Migration("20260407083422_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -389,8 +389,7 @@ namespace BlogWebAPIApp.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.HasIndex("UserId", "PostId")
-                        .IsUnique();
+                    b.HasIndex("UserId", "PostId");
 
                     b.ToTable("PremiumReadLogs");
                 });

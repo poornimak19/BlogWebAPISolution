@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace BlogWebAPIApp.Migrations
 {
     /// <inheritdoc />
-    public partial class feature : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -92,7 +92,9 @@ namespace BlogWebAPIApp.Migrations
                     Status = table.Column<string>(type: "nvarchar(16)", maxLength: 16, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsSuspended = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    CanComment = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
+                    CanComment = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
+                    IsPremiumSubscriber = table.Column<bool>(type: "bit", nullable: false),
+                    PremiumExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -134,6 +136,9 @@ namespace BlogWebAPIApp.Migrations
                     ContentHtml = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ContentMarkdown = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CoverImageUrl = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: true),
+                    AudioUrl = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: true),
+                    VideoUrl = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: true),
+                    IsPremium = table.Column<bool>(type: "bit", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
                     Visibility = table.Column<int>(type: "int", nullable: false),
                     CommentsEnabled = table.Column<bool>(type: "bit", nullable: false),
@@ -361,6 +366,31 @@ namespace BlogWebAPIApp.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PremiumReadLogs",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PostId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ReadAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PremiumReadLogs", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PremiumReadLogs_Posts_PostId",
+                        column: x => x.PostId,
+                        principalTable: "Posts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PremiumReadLogs_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "CommentLikes",
                 columns: table => new
                 {
@@ -473,6 +503,16 @@ namespace BlogWebAPIApp.Migrations
                 column: "TagId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PremiumReadLogs_PostId",
+                table: "PremiumReadLogs",
+                column: "PostId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PremiumReadLogs_UserId_PostId",
+                table: "PremiumReadLogs",
+                columns: new[] { "UserId", "PostId" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Reports_ReporterId",
                 table: "Reports",
                 column: "ReporterId");
@@ -543,6 +583,9 @@ namespace BlogWebAPIApp.Migrations
 
             migrationBuilder.DropTable(
                 name: "PostTags");
+
+            migrationBuilder.DropTable(
+                name: "PremiumReadLogs");
 
             migrationBuilder.DropTable(
                 name: "Reports");

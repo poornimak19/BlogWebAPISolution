@@ -24,6 +24,10 @@ export class AdminTaxonomyComponent implements OnInit {
   newTagName  = '';
   newCatName  = '';
 
+  // Inline error messages for duplicate detection
+  tagError = signal<string | null>(null);
+  catError = signal<string | null>(null);
+
   // Inline rename state: { id, name }
   renamingTag = signal<{ id: number; name: string } | null>(null);
   renamingCat = signal<{ id: number; name: string } | null>(null);
@@ -43,13 +47,17 @@ export class AdminTaxonomyComponent implements OnInit {
   createTag(): void {
     const name = this.newTagName.trim();
     if (!name) return;
+    this.tagError.set(null);
     this.adminSvc.createTag(name).subscribe({
       next: t => { this.tags.update(list => [...list, t]); this.newTagName = ''; this.toast.success('Tag created.'); },
-      error: e => this.toast.error(e.error?.message || 'Failed to create tag.')
+      error: e => {
+        const msg = e.error?.message || 'Failed to create tag.';
+        this.tagError.set(msg);
+      }
     });
   }
 
-  startRenameTag(tag: TagDto): void { this.renamingTag.set({ id: tag.id, name: tag.name }); }
+  startRenameTag(tag: TagDto): void { this.renamingTag.set({ id: tag.id, name: tag.name }); this.tagError.set(null); }
   cancelRenameTag(): void { this.renamingTag.set(null); }
 
   saveRenameTag(): void {
@@ -57,7 +65,7 @@ export class AdminTaxonomyComponent implements OnInit {
     if (!r || !r.name.trim()) return;
     this.adminSvc.renameTag(r.id, r.name.trim()).subscribe({
       next: updated => { this.tags.update(list => list.map(t => t.id === r.id ? updated : t)); this.renamingTag.set(null); this.toast.success('Tag renamed.'); },
-      error: () => this.toast.error('Failed to rename tag.')
+      error: e => this.toast.error(e.error?.message || 'Failed to rename tag.')
     });
   }
 
@@ -73,13 +81,17 @@ export class AdminTaxonomyComponent implements OnInit {
   createCategory(): void {
     const name = this.newCatName.trim();
     if (!name) return;
+    this.catError.set(null);
     this.adminSvc.createCategory(name).subscribe({
       next: c => { this.categories.update(list => [...list, c]); this.newCatName = ''; this.toast.success('Category created.'); },
-      error: e => this.toast.error(e.error?.message || 'Failed to create category.')
+      error: e => {
+        const msg = e.error?.message || 'Failed to create category.';
+        this.catError.set(msg);
+      }
     });
   }
 
-  startRenameCat(cat: CategoryDto): void { this.renamingCat.set({ id: cat.id, name: cat.name }); }
+  startRenameCat(cat: CategoryDto): void { this.renamingCat.set({ id: cat.id, name: cat.name }); this.catError.set(null); }
   cancelRenameCat(): void { this.renamingCat.set(null); }
 
   saveRenameCat(): void {
@@ -87,7 +99,7 @@ export class AdminTaxonomyComponent implements OnInit {
     if (!r || !r.name.trim()) return;
     this.adminSvc.renameCategory(r.id, r.name.trim()).subscribe({
       next: updated => { this.categories.update(list => list.map(c => c.id === r.id ? updated : c)); this.renamingCat.set(null); this.toast.success('Category renamed.'); },
-      error: () => this.toast.error('Failed to rename category.')
+      error: e => this.toast.error(e.error?.message || 'Failed to rename category.')
     });
   }
 

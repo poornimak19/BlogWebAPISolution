@@ -55,7 +55,7 @@ export class LoginModalComponent {
     this.busy.set(true); this.error.set('');
     this.auth.register({ email: d.email, username: d.username, password: d.password, displayName: d.displayName || undefined, role: d.role }).subscribe({
       next: () => { this.toast.success('Account created! Welcome!'); this.modal.close(); this.busy.set(false); },
-      error: e => { this.error.set(e.error?.message || 'Registration failed.'); this.busy.set(false); }
+      error: e => { this.error.set(e.error?.message || 'Enter correct mail ID.'); this.busy.set(false); }
     });
   }
 

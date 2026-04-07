@@ -386,8 +386,7 @@ namespace BlogWebAPIApp.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.HasIndex("UserId", "PostId")
-                        .IsUnique();
+                    b.HasIndex("UserId", "PostId");
 
                     b.ToTable("PremiumReadLogs");
                 });

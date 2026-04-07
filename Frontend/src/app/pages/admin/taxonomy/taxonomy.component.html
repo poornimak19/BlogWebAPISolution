@@ -31,11 +31,18 @@
           <div class="create-row">
             <input type="text" [(ngModel)]="newTagName" name="newTag"
               placeholder="New tag name…" class="tax-input"
+              [class.tax-input--error]="tagError()"
+              (ngModelChange)="tagError.set(null)"
               (keydown.enter)="createTag()"/>
             <button class="btn-create" (click)="createTag()" [disabled]="!newTagName.trim()">
               + Add
             </button>
           </div>
+          @if (tagError()) {
+            <p class="tax-error">
+              <i class="bi bi-exclamation-circle-fill"></i> {{ tagError() }}
+            </p>
+          }
 
           <!-- Tag list -->
           <div class="tax-list">
@@ -90,11 +97,18 @@
           <div class="create-row">
             <input type="text" [(ngModel)]="newCatName" name="newCat"
               placeholder="New category name…" class="tax-input"
+              [class.tax-input--error]="catError()"
+              (ngModelChange)="catError.set(null)"
               (keydown.enter)="createCategory()"/>
             <button class="btn-create" (click)="createCategory()" [disabled]="!newCatName.trim()">
               + Add
             </button>
           </div>
+          @if (catError()) {
+            <p class="tax-error">
+              <i class="bi bi-exclamation-circle-fill"></i> {{ catError() }}
+            </p>
+          }
 
           <!-- Category list -->
           <div class="tax-list">

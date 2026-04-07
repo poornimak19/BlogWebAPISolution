@@ -5,7 +5,7 @@ namespace BlogWebAPIApp.Models.DTOs
 {
 
     public record RegisterRequestDto(
-            [Required, EmailAddress] string Email,
+            [Required, EmailAddress, RegularExpression(@"^[^@\s]+@[^@\s]+\.[^@\s]{2,}$", ErrorMessage = "Email must be a valid format like example@gmail.com")] string Email,
             [Required, MinLength(3), MaxLength(64)] string Username,
             [Required, MinLength(6)] string Password,
             string? DisplayName,

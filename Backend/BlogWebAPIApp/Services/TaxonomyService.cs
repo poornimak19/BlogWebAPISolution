@@ -31,22 +31,24 @@ namespace BlogWebAPIApp.Services
         public async Task<Tag> EnsureTag(string name)
         {
             var slug = Slugify(name);
-            var existing = await _tags.GetQueryable().FirstOrDefaultAsync(t => t.Slug == slug);
-            if (existing != null) return existing;
+            var existing = await _tags.GetQueryable().FirstOrDefaultAsync(t => t.Slug == slug || t.Name == name);
+            if (existing != null)
+                throw new InvalidOperationException($"Tag '{existing.Name}' already exists.");
 
             var tag = new Tag { Name = name, Slug = slug };
-            await _tags.Add(tag); // persists
+            await _tags.Add(tag);
             return tag;
         }
 
         public async Task<Category> EnsureCategory(string name)
         {
             var slug = Slugify(name);
-            var existing = await _categories.GetQueryable().FirstOrDefaultAsync(c => c.Slug == slug);
-            if (existing != null) return existing;
+            var existing = await _categories.GetQueryable().FirstOrDefaultAsync(c => c.Slug == slug || c.Name == name);
+            if (existing != null)
+                throw new InvalidOperationException($"Category '{existing.Name}' already exists.");
 
             var cat = new Category { Name = name, Slug = slug };
-            await _categories.Add(cat); // persists
+            await _categories.Add(cat);
             return cat;
         }
 

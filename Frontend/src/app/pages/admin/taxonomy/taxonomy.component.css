@@ -93,3 +93,12 @@
 [data-theme="dark"] .act-btn--danger:hover  { background: #4c1414; }
 
 @media (max-width: 900px) { .tax-grid { grid-template-columns: 1fr; } .admin-main { padding: 20px 12px 60px; } }
+
+/* Duplicate / error feedback */
+.tax-input--error { border-color: var(--color-danger) !important; }
+.tax-error {
+  margin: 0; padding: 6px 16px 10px;
+  font-size: 0.8rem; color: var(--color-danger);
+  display: flex; align-items: center; gap: 5px;
+  background: var(--bg-alt);
+}
