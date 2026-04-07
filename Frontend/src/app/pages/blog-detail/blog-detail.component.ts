@@ -8,6 +8,8 @@ import { LoginModalService, ToastService } from '../../services/ui.services';
 import { PostDetailDto, PostSummaryDto } from '../../models/post.models';
 import { CommentComponent } from '../../components/comment/comment.component';
 import { PostCardComponent } from '../../components/post-card/post-card.component';
+import { environment } from '../../../environments/environment';
+import { PremiumService, PremiumAccessDto } from '../../services/premium.service';
 
 @Component({
   selector: 'app-blog-detail',
@@ -30,6 +32,25 @@ export class BlogDetailComponent implements OnInit {
   loading      = signal(true);
   liked        = signal(false);
   likeCount    = signal(0);
+  access       = signal<PremiumAccessDto | null>(null);
+  subscribing  = signal(false);
+
+  readonly premiumSvc = inject(PremiumService);
+  readonly mediaBase  = environment.apiUrl.replace('/api', '');
+
+  mediaUrl(url: string): string {
+    return url.startsWith('http') ? url : `${this.mediaBase}${url}`;
+  }
+
+  /** Truncated preview of HTML content (first 100 plain-text chars) */
+  get previewHtml(): string {
+    const plain = (this.post()?.contentHtml || '').replace(/<[^>]*>/g, '');
+    return plain.slice(0, 100) + '…';
+  }
+
+  get showFull(): boolean {
+    return !this.post()?.isPremium || (this.access()?.fullAccess ?? false);
+  }
 
   isAuthor = computed(() => {
     const me = this.auth.currentUser();
@@ -57,6 +78,15 @@ export class BlogDetailComponent implements OnInit {
         this.likeCount.set(p.likesCount ?? 0);
         this.loading.set(false);
         this.loadRelated(p);
+        // Check premium access after loading post
+        if (p.isPremium) {
+          this.premiumSvc.checkAccess(p.id).subscribe({
+            next: a => this.access.set(a),
+            error: () => this.access.set({ fullAccess: false, isPremiumSubscriber: false, readsThisMonth: 0, previewChars: 100 })
+          });
+        } else {
+          this.access.set({ fullAccess: true, isPremiumSubscriber: false, readsThisMonth: 0, previewChars: 100 });
+        }
       },
       error: () => this.loading.set(false)
     });
@@ -108,6 +138,21 @@ export class BlogDetailComponent implements OnInit {
     this.postSvc.delete(this.post()!.id).subscribe({
       next: () => { this.toast.success('Story deleted.'); this.router.navigate(['/']); },
       error: () => this.toast.error('Failed to delete.')
+    });
+  }
+
+  subscribePremium(): void {
+    if (!this.auth.isLoggedIn()) { this.loginModal.open(); return; }
+    this.subscribing.set(true);
+    this.premiumSvc.subscribe().subscribe({
+      next: r => {
+        this.toast.success(`Premium activated until ${new Date(r.expiresAt).toLocaleDateString()} 🎉`);
+        this.auth.fetchMe().subscribe();
+        // Re-check access
+        this.premiumSvc.checkAccess(this.post()!.id).subscribe({ next: a => this.access.set(a) });
+        this.subscribing.set(false);
+      },
+      error: () => { this.toast.error('Subscription failed.'); this.subscribing.set(false); }
     });
   }
 }

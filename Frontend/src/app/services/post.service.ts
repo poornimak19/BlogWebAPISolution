@@ -81,4 +81,11 @@ export class PostService {
   delete(id: string): Observable<any> {
     return this.http.delete(`${this.base}/${id}`).pipe(catchError(e => throwError(() => e)));
   }
+
+  uploadMedia(file: File): Observable<{ url: string }> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<{ url: string }>(`${this.base}/upload-media`, fd)
+      .pipe(catchError(e => throwError(() => e)));
+  }
 }

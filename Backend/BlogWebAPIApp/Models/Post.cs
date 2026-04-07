@@ -28,6 +28,14 @@ namespace BlogWebAPIApp.Models
         [MaxLength(512)]
         public string? CoverImageUrl { get; set; }
 
+        [MaxLength(512)]
+        public string? AudioUrl { get; set; }
+
+        [MaxLength(512)]
+        public string? VideoUrl { get; set; }
+
+        public bool IsPremium { get; set; } = false;
+
         public PostStatus Status { get; set; } = PostStatus.Draft;
         public Visibility Visibility { get; set; } = Visibility.Public;
 

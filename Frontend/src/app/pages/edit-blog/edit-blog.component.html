@@ -84,20 +84,92 @@
               <span class="chip">{{ t }}<button type="button" class="chip-x" (click)="removeTag(t)">×</button></span>
             }
           </div>
+          @if (suggestedTags().length > 0) {
+            <p class="side-hint">Suggestions</p>
+            <div class="chips">
+              @for (t of suggestedTags(); track t.id) {
+                <button type="button" class="chip chip--suggest" (click)="addSuggestedTag(t.name)">+ {{ t.name }}</button>
+              }
+            </div>
+          }
         </div>
 
         <div class="side-sec">
           <h4 class="side-label">Categories</h4>
+          <input type="text" [(ngModel)]="categoryInput" name="ci" placeholder="Add category, press Enter" class="side-input" (keydown.enter)="addCategory($event)"/>
           <div class="chips">
-            @for (c of categories(); track c.id) {
-              <button type="button" class="chip" [class.chip--on]="form.categoryNames.includes(c.name)" (click)="toggleCat(c.name)">{{ c.name }}</button>
+            @for (c of form.categoryNames; track c) {
+              <span class="chip">{{ c }}<button type="button" class="chip-x" (click)="removeCategory(c)">×</button></span>
             }
           </div>
+          @if (suggestedCategories().length > 0) {
+            <p class="side-hint">Suggestions</p>
+            <div class="chips">
+              @for (c of suggestedCategories(); track c.id) {
+                <button type="button" class="chip chip--suggest" (click)="addSuggestedCategory(c.name)">+ {{ c.name }}</button>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Audio Upload -->
+        <div class="side-sec">
+          <h4 class="side-label">Audio</h4>
+          @if (!audioUrl()) {
+            <label class="media-drop" [class.media-drop--busy]="audioUploading()">
+              <input type="file" accept="audio/*" class="media-file-input" (change)="onAudioSelected($event)" [disabled]="audioUploading()"/>
+              <span class="media-drop-icon">🎵</span>
+              <span class="media-drop-text">{{ audioUploading() ? 'Uploading…' : 'Click to upload audio' }}</span>
+              <span class="media-drop-hint">MP3, WAV, OGG, WEBM</span>
+            </label>
+          } @else {
+            <div class="media-preview-box">
+              <div class="media-preview-info">
+                <span class="media-preview-icon">🎵</span>
+                <span class="media-preview-name">{{ audioFileName() }}</span>
+              </div>
+              <audio controls [src]="mediaUrl(audioUrl()!)" class="media-player" preload="metadata"></audio>
+              <button type="button" class="media-remove-btn" (click)="removeAudio()">✕ Remove</button>
+            </div>
+          }
+        </div>
+
+        <!-- Video Upload -->
+        <div class="side-sec">
+          <h4 class="side-label">Video</h4>
+          @if (!videoUrl()) {
+            <label class="media-drop" [class.media-drop--busy]="videoUploading()">
+              <input type="file" accept="video/*" class="media-file-input" (change)="onVideoSelected($event)" [disabled]="videoUploading()"/>
+              <span class="media-drop-icon">🎬</span>
+              <span class="media-drop-text">{{ videoUploading() ? 'Uploading…' : 'Click to upload video' }}</span>
+              <span class="media-drop-hint">MP4, WEBM, OGG, MOV</span>
+            </label>
+          } @else {
+            <div class="media-preview-box">
+              <div class="media-preview-info">
+                <span class="media-preview-icon">🎬</span>
+                <span class="media-preview-name">{{ videoFileName() }}</span>
+              </div>
+              <video controls [src]="mediaUrl(videoUrl()!)" class="media-player" preload="metadata"></video>
+              <button type="button" class="media-remove-btn" (click)="removeVideo()">✕ Remove</button>
+            </div>
+          }
         </div>
 
         <div class="side-sec">
           <h4 class="side-label">Comments</h4>
           <label class="toggle-row"><input type="checkbox" [(ngModel)]="form.commentsEnabled" name="ce"/><span>Enable comments</span></label>
+        </div>
+
+        <div class="side-sec">
+          <h4 class="side-label">Premium</h4>
+          <label class="toggle-row">
+            <input type="checkbox" [(ngModel)]="form.isPremium" name="premium"/>
+            <span>Premium content</span>
+          </label>
+          @if (form.isPremium) {
+            <p class="premium-hint">👑 Free readers get 2 premium reads/month. After that, only the first 100 characters are shown.</p>
+          }
         </div>
 
         <div class="side-sec">

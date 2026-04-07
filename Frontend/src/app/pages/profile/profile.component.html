@@ -18,10 +18,18 @@
 
           <div class="profile-info">
             <h1 class="profile-name">{{ profile()!.displayName || profile()!.username }}</h1>
-            <p class="profile-handle">&#64;{{ profile()!.username }}</p>
-            <!-- <span class="role-badge role-badge--{{ (profile()!.role || 'reader').toLowerCase() }}">
-              {{ profile()!.role || 'Reader' }}
-            </span> -->
+            <p class="profile-handle">@`{{ profile()!.username }}</p>
+
+            <!-- Role + Premium badges -->
+            <div class="profile-badges">
+              <span class="role-badge role-badge--{{ (profile()!.role || 'reader').toLowerCase() }}">
+                {{ profile()!.role || 'Reader' }}
+              </span>
+              @if (isOwnProfile() && isPremium()) {
+                <span class="premium-member-badge">👑 Premium Member</span>
+              }
+            </div>
+
             @if (profile()!.bio) { <p class="profile-bio">{{ profile()!.bio }}</p> }
             <div class="profile-stats">
               @if (isOwnProfile() && isReader()) {
@@ -42,6 +50,12 @@
             <button class="btn-action btn-action--outline" (click)="openEdit()">Edit Profile</button>
             @if (isBlogger()) {
               <a routerLink="/create" class="btn-action btn-action--solid">+ New Story</a>
+            }
+            <!-- Premium status -->
+            @if (isPremium()) {
+              <a routerLink="/premium" class="btn-action btn-action--premium">👑 Premium Active</a>
+            } @else {
+              <a routerLink="/premium" class="btn-action btn-action--upgrade">👑 Go Premium</a>
             }
           } @else if (auth.isLoggedIn()) {
             <button class="btn-action"
@@ -76,6 +90,36 @@
     </div>
 
     <div class="profile-content">
+      <!-- Membership status card — own profile only -->
+      @if (isOwnProfile()) {
+        @if (isPremium()) {
+          <div class="membership-card membership-card--premium">
+            <div class="mc-left">
+              <span class="mc-icon">👑</span>
+              <div>
+                <p class="mc-title">Premium Member</p>
+                <p class="mc-sub">Unlimited access to all premium stories, audio &amp; video</p>
+                @if (auth.currentUser()?.premiumExpiresAt) {
+                  <p class="mc-expiry">Renews {{ auth.currentUser()!.premiumExpiresAt! | date:'MMMM d, y' }}</p>
+                }
+              </div>
+            </div>
+            <a routerLink="/premium" class="mc-btn mc-btn--manage">Manage</a>
+          </div>
+        } @else {
+          <div class="membership-card membership-card--free">
+            <div class="mc-left">
+              <span class="mc-icon">📖</span>
+              <div>
+                <p class="mc-title">Free Plan</p>
+                <p class="mc-sub">You can read up to 2 premium stories per month</p>
+              </div>
+            </div>
+            <a routerLink="/premium" class="mc-btn mc-btn--upgrade">👑 Upgrade to Premium</a>
+          </div>
+        }
+      }
+
       @if (activeTab() === 'following') {
         <div class="following-section">
           <p class="following-desc">Bloggers you follow — click any story to read.</p>

@@ -291,3 +291,17 @@
   font-weight: 600;
 }
 [data-theme="dark"] .dd-item--admin { color: #a5b4fc !important; }
+
+/* ── Premium nav button ── */
+.btn-premium {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 14px; border-radius: 100px; font-size: 0.82rem; font-weight: 700;
+  text-decoration: none; transition: all 0.2s; white-space: nowrap;
+  background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;
+  border: none; cursor: pointer;
+}
+.btn-premium:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-premium--active {
+  background: linear-gradient(135deg, #059669, #047857);
+}
+.dd-item--premium { color: #d97706 !important; font-weight: 600; }

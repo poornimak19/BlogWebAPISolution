@@ -50,6 +50,17 @@
         <h1 class="detail-title">{{ post()!.title }}</h1>
         @if (post()!.excerpt) { <p class="detail-excerpt">{{ post()!.excerpt }}</p> }
 
+        <!-- Premium badge -->
+        @if (post()!.isPremium) {
+          <div class="premium-badge" [class.premium-badge--active]="showFull">
+            <span class="premium-badge-icon">👑</span>
+            <span>Premium Story</span>
+            @if (showFull && access() && !auth.isPremium() && !isAuthor()) {
+              <span class="premium-reads-left">{{ 2 - (access()!.readsThisMonth) }} free read{{ (2 - access()!.readsThisMonth) !== 1 ? 's' : '' }} left this month</span>
+            }
+          </div>
+        }
+
         <div class="author-row">
           <a [routerLink]="['/profile', post()!.author.username]" class="author-link">
             <div class="author-av">{{ post()!.author.username[0].toUpperCase() }}</div>
@@ -80,7 +91,56 @@
     </header>
 
     <div class="detail-body">
-      <div class="prose" [innerHTML]="post()!.contentHtml"></div>
+      <!-- Full content (non-premium or has access) -->
+      @if (showFull) {
+        <div class="prose" [innerHTML]="post()!.contentHtml"></div>
+
+        <!-- Audio player -->
+        @if (post()!.audioUrl) {
+          <div class="media-block media-block--audio">
+            <div class="media-block-label">🎵 Audio</div>
+            <audio controls [src]="mediaUrl(post()!.audioUrl!)" class="media-block-player" preload="metadata"></audio>
+          </div>
+        }
+
+        <!-- Video player -->
+        @if (post()!.videoUrl) {
+          <div class="media-block media-block--video">
+            <div class="media-block-label">🎬 Video</div>
+            <video controls [src]="mediaUrl(post()!.videoUrl!)" class="media-block-player" preload="metadata"></video>
+          </div>
+        }
+      }
+
+      <!-- Paywall: premium post, no access -->
+      @if (post()!.isPremium && !showFull) {
+        <div class="prose paywall-preview">{{ previewHtml }}</div>
+        <div class="paywall">
+          <div class="paywall-icon">👑</div>
+          <h2 class="paywall-title">This is a Premium Story</h2>
+          <p class="paywall-sub">
+            @if (!auth.isLoggedIn()) {
+              Sign in to get 2 free premium reads per month, or subscribe for unlimited access.
+            } @else {
+              You've used your 2 free premium reads this month.<br>
+              Subscribe to read all premium stories without limits.
+            }
+          </p>
+          <div class="paywall-features">
+            <span>✓ Unlimited premium stories</span>
+            <span>✓ Audio &amp; video content</span>
+            <span>✓ Cancel anytime</span>
+          </div>
+          @if (auth.isLoggedIn()) {
+            <a routerLink="/premium" class="paywall-btn">🔓 Subscribe for Premium — ₹99/month</a>
+          } @else {
+            <div class="paywall-actions">
+              <button class="paywall-btn" (click)="loginModal.open()">Sign in to read</button>
+              <a routerLink="/premium" class="paywall-btn paywall-btn--outline">View Premium Plans</a>
+            </div>
+          }
+        </div>
+      }
 
       <div class="post-footer-actions">
         <button class="act-lg" [class.act-lg--liked]="liked()" (click)="toggleLike()">

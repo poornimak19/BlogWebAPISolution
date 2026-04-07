@@ -46,6 +46,17 @@
           </a>
         }
 
+        <!-- Premium CTA / badge -->
+        @if (isPremium()) {
+          <a routerLink="/premium" class="btn-premium btn-premium--active" title="Premium active">
+            👑 Premium
+          </a>
+        } @else {
+          <a routerLink="/premium" class="btn-premium">
+            👑 Go Premium
+          </a>
+        }
+
         <div class="nav-user" (click)="toggleMenu($event)">
           @if (avatarUrl) {
             <img [src]="avatarUrl" class="nav-avatar nav-avatar--img" [alt]="displayName"
@@ -60,6 +71,9 @@
             <div class="nav-dropdown" role="menu">
               <a routerLink="/me" class="dd-item" (click)="closeMenu()">
                 <i class="bi bi-person-circle"></i> My Profile
+              </a>
+              <a routerLink="/premium" class="dd-item dd-item--premium" (click)="closeMenu()">
+                <i class="bi bi-star-fill"></i> {{ isPremium() ? '👑 Premium Active' : 'Go Premium' }}
               </a>
               @if (auth.userRole() === 'Blogger' || auth.userRole() === 'Admin') {
                 <a routerLink="/me" class="dd-item" (click)="closeMenu()">

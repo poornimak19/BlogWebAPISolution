@@ -30,6 +30,9 @@ namespace BlogWebAPIApp.Models.DTOs
         public bool? CommentsEnabled { get; set; }
         public bool? AutoApproveComments { get; set; }
         public string CoverImageUrl { get; set; } = string.Empty;
+        public string? AudioUrl { get; set; }
+        public string? VideoUrl { get; set; }
+        public bool IsPremium { get; set; } = false;
     }
 
     // Request to update a post (all fields optional)
@@ -61,6 +64,9 @@ namespace BlogWebAPIApp.Models.DTOs
         public string? Status { get; set; }
 
         public string CoverImageUrl { get; set; } = string.Empty;
+        public string? AudioUrl { get; set; }
+        public string? VideoUrl { get; set; }
+        public bool? IsPremium { get; set; }
     }
 
     // Response DTOs
@@ -72,6 +78,9 @@ namespace BlogWebAPIApp.Models.DTOs
         string Slug,
         string? Excerpt,
         string? CoverImageUrl,
+        string? AudioUrl,
+        string? VideoUrl,
+        bool IsPremium,
         string Status,
         string Visibility,
         bool IsRejected,
@@ -92,6 +101,9 @@ namespace BlogWebAPIApp.Models.DTOs
         string ContentHtml,
         string? ContentMarkdown,
         string? CoverImageUrl,
+        string? AudioUrl,
+        string? VideoUrl,
+        bool IsPremium,
         string Status,
         string Visibility,
         bool CommentsEnabled,

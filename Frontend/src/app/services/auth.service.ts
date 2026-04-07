@@ -16,6 +16,12 @@ export class AuthService {
   readonly currentUser = this._user.asReadonly();
   readonly isLoggedIn  = computed(() => !!this._user());
   readonly userRole    = computed(() => this._user()?.role ?? null);
+  readonly isPremium   = computed(() => {
+    const u = this._user();
+    if (!u?.isPremiumSubscriber) return false;
+    if (!u.premiumExpiresAt) return true;
+    return new Date(u.premiumExpiresAt) > new Date();
+  });
 
   constructor(private http: HttpClient, private router: Router) {
     const token = localStorage.getItem('token');

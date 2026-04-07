@@ -1,0 +1,152 @@
+<div class="premium-page">
+
+  <!-- ── PLANS STEP ── -->
+  @if (step() === 'plans') {
+    <div class="plans-hero">
+      <div class="plans-hero-badge">👑 Premium</div>
+      <h1 class="plans-title">Unlock Every Story</h1>
+      <p class="plans-sub">Free readers get 2 premium stories per month. Go Premium for unlimited access.</p>
+    </div>
+
+    <div class="plans-grid">
+
+      <!-- Free plan -->
+      <div class="plan-card">
+        <div class="plan-header">
+          <span class="plan-icon">📖</span>
+          <h2 class="plan-name">Free</h2>
+          <div class="plan-price"><span class="plan-amount">₹0</span><span class="plan-period">/month</span></div>
+        </div>
+        <ul class="plan-features">
+          <li class="feat feat--yes">✓ Read all public stories</li>
+          <li class="feat feat--yes">✓ Like &amp; comment</li>
+          <li class="feat feat--yes">✓ Follow authors</li>
+          <li class="feat feat--no">✗ Only 2 premium stories/month</li>
+          <li class="feat feat--no">✗ No audio/video in premium posts</li>
+        </ul>
+        <div class="plan-cta">
+          @if (auth.isLoggedIn()) {
+            <span class="plan-current">Your current plan</span>
+          } @else {
+            <button class="btn-plan btn-plan--ghost" (click)="loginModal.open()">Sign in free</button>
+          }
+        </div>
+      </div>
+
+      <!-- Premium plan -->
+      <div class="plan-card plan-card--premium">
+        <div class="plan-badge-top">Most Popular</div>
+        <div class="plan-header">
+          <span class="plan-icon">👑</span>
+          <h2 class="plan-name">Premium</h2>
+          <div class="plan-price"><span class="plan-amount">₹99</span><span class="plan-period">/month</span></div>
+        </div>
+        <ul class="plan-features">
+          <li class="feat feat--yes">✓ Unlimited premium stories</li>
+          <li class="feat feat--yes">✓ Full audio &amp; video access</li>
+          <li class="feat feat--yes">✓ Like, comment &amp; follow</li>
+          <li class="feat feat--yes">✓ Early access to new features</li>
+          <li class="feat feat--yes">✓ Cancel anytime</li>
+        </ul>
+        <div class="plan-cta">
+          @if (isAlreadyPremium()) {
+            <span class="plan-current plan-current--premium">✓ Active — expires {{ expiresAt() | date:'MMM d, y' }}</span>
+          } @else {
+            <button class="btn-plan btn-plan--solid" (click)="goToPayment()">Get Premium</button>
+          }
+        </div>
+      </div>
+
+    </div>
+
+    <p class="plans-note">Secure payment · Cancel anytime · Instant activation</p>
+  }
+
+  <!-- ── PAYMENT STEP ── -->
+  @if (step() === 'payment') {
+    <div class="payment-wrap">
+      <button class="pay-back" (click)="step.set('plans')">← Back to plans</button>
+
+      <div class="payment-card">
+        <div class="pay-header">
+          <span class="pay-icon">💳</span>
+          <h2 class="pay-title">Complete Payment</h2>
+          <p class="pay-sub">Premium subscription · <strong>₹99/month</strong></p>
+        </div>
+
+        <div class="pay-form">
+          <div class="pay-field">
+            <label>Cardholder Name</label>
+            <input type="text" [(ngModel)]="card.name" placeholder="Name on card" class="pay-input" [disabled]="processing()"/>
+          </div>
+
+          <div class="pay-field">
+            <label>Card Number</label>
+            <div class="pay-input-icon-wrap">
+              <input type="text" [value]="card.number" (input)="formatCardNumber($event)"
+                placeholder="1234 5678 9012 3456" class="pay-input" maxlength="19" [disabled]="processing()"/>
+              <span class="pay-card-icons">💳</span>
+            </div>
+          </div>
+
+          <div class="pay-row">
+            <div class="pay-field">
+              <label>Expiry Date</label>
+              <input type="text" [value]="card.expiry" (input)="formatExpiry($event)"
+                placeholder="MM/YY" class="pay-input" maxlength="5" [disabled]="processing()"/>
+            </div>
+            <div class="pay-field">
+              <label>CVV</label>
+              <input type="password" [(ngModel)]="card.cvv" placeholder="•••"
+                class="pay-input" maxlength="4" [disabled]="processing()"/>
+            </div>
+          </div>
+
+          <div class="pay-summary">
+            <div class="pay-summary-row">
+              <span>Premium subscription (1 month)</span>
+              <span>₹99.00</span>
+            </div>
+            <div class="pay-summary-row pay-summary-row--total">
+              <span>Total</span>
+              <span>₹99.00</span>
+            </div>
+          </div>
+
+          <button class="btn-pay" (click)="pay()" [disabled]="processing()">
+            @if (processing()) {
+              <span class="pay-spinner"></span> Processing…
+            } @else {
+              🔒 Pay ₹99 &amp; Activate Premium
+            }
+          </button>
+
+          <p class="pay-secure">🔒 Secured by 256-bit SSL encryption</p>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── SUCCESS STEP ── -->
+  @if (step() === 'success') {
+    <div class="success-wrap">
+      <div class="success-card">
+        <div class="success-icon">🎉</div>
+        <h2 class="success-title">You're Premium!</h2>
+        <p class="success-sub">
+          Welcome to the premium experience. Enjoy unlimited access to all stories.
+        </p>
+        @if (expiresAt()) {
+          <p class="success-expiry">Your subscription is active until <strong>{{ expiresAt() | date:'MMMM d, y' }}</strong></p>
+        }
+        <div class="success-perks">
+          <div class="perk"><span class="perk-icon">📚</span><span>Unlimited premium stories</span></div>
+          <div class="perk"><span class="perk-icon">🎵</span><span>Full audio access</span></div>
+          <div class="perk"><span class="perk-icon">🎬</span><span>Full video access</span></div>
+        </div>
+        <a routerLink="/" class="btn-explore">Start Reading →</a>
+      </div>
+    </div>
+  }
+
+</div>

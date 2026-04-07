@@ -1,4 +1,4 @@
-import { Component, inject, signal, HostListener, ElementRef } from '@angular/core';
+import { Component, inject, signal, HostListener, ElementRef, computed } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { LoginModalService, ThemeService } from '../../services/ui.services';
@@ -19,6 +19,13 @@ export class NavbarComponent {
 
   menuOpen = signal(false);
   scrolled = signal(false);
+
+  isPremium = computed(() => {
+    const u = this.auth.currentUser();
+    if (!u?.isPremiumSubscriber) return false;
+    if (!u.premiumExpiresAt) return true;
+    return new Date(u.premiumExpiresAt) > new Date();
+  });
 
   /** Close dropdown when clicking anywhere OUTSIDE the navbar */
   @HostListener('document:click', ['$event'])

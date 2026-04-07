@@ -21,7 +21,9 @@ export interface MeResponseDto {
   displayName?: string;
   email: string;
   role: string;
-  avatarUrl?: string;   // ← added so navbar avatar image works
+  avatarUrl?: string;
+  isPremiumSubscriber: boolean;
+  premiumExpiresAt?: string;
 }
 
 export interface ForgotPasswordRequestDto {

@@ -5,6 +5,7 @@ import { PostSummaryDto } from '../../models/post.models';
 import { AuthService } from '../../services/auth.service';
 import { LoginModalService, ToastService } from '../../services/ui.services';
 import { ReactionService } from '../../services/blog.services';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-post-card',
@@ -23,13 +24,20 @@ export class PostCardComponent implements OnInit {
 
   liked      = signal(false);
   likeCount  = signal(0);
-  imgBroken  = signal(false);   // track load errors
+  imgBroken  = signal(false);
+
+  // Base URL for locally-uploaded media files
+  readonly mediaBase = environment.apiUrl.replace('/api', '');
 
   ngOnInit(): void { this.likeCount.set(this.post.likesCount ?? 0); this.imgBroken.set(false); }
 
-  /** True only when coverImageUrl is a non-empty string and hasn't errored */
   get hasCover(): boolean {
     return !!(this.post.coverImageUrl?.trim()) && !this.imgBroken();
+  }
+
+  /** Resolve a media URL — absolute if it starts with http, otherwise prepend backend base */
+  mediaUrl(url: string): string {
+    return url.startsWith('http') ? url : `${this.mediaBase}${url}`;
   }
 
   onImgError(): void { this.imgBroken.set(true); }

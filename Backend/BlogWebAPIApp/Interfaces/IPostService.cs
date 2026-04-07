@@ -12,12 +12,15 @@ namespace BlogWebAPIApp.Interfaces
             string? excerpt,
             string contentHtml,
             string? contentMarkdown,
-            string visibility,              // "Public" | "Private"
+            string visibility,
             IEnumerable<string>? tagNames,
             IEnumerable<string>? categoryNames,
             bool? commentsEnabled,
             bool? autoApproveComments,
-            string coverImageUrl
+            string coverImageUrl,
+            string? audioUrl,
+            string? videoUrl,
+            bool isPremium
         );
 
         Task<Post?> GetById(Guid postId);
@@ -38,7 +41,10 @@ namespace BlogWebAPIApp.Interfaces
             bool? commentsEnabled,
             bool? autoApproveComments,
             string? status,
-            string coverImageUrl
+            string coverImageUrl,
+            string? audioUrl,
+            string? videoUrl,
+            bool? isPremium
         );
 
         Task Publish(Guid postId, Guid actorUserId);

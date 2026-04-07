@@ -99,3 +99,83 @@
 .not-found h2 { font-size: 1.6rem; color: var(--text-primary); margin: 0 0 10px; }
 .not-found p  { color: var(--text-ghost); margin: 0 0 28px; }
 .nf-btn { display: inline-block; padding: 11px 26px; background: var(--ink); color: var(--ink-inv); border-radius: 100px; text-decoration: none; font-weight: 700; }
+
+/* ── Inline media blocks (audio / video) ── */
+.media-block {
+  margin: 32px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border, #ebebeb);
+  background: var(--bg-card, #fafafa);
+}
+.media-block--audio { border-left: 4px solid #6366f1; }
+.media-block--video { border-left: 4px solid #10b981; }
+
+.media-block-label {
+  padding: 10px 16px 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-ghost, #999);
+}
+.media-block-player {
+  display: block;
+  width: 100%;
+  padding: 0 12px 12px;
+  box-sizing: border-box;
+  outline: none;
+  max-height: 360px;
+}
+
+/* ── Premium badge ── */
+.premium-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 1px solid #f59e0b; border-radius: 100px;
+  padding: 5px 14px; font-size: 0.82rem; font-weight: 700;
+  color: #92400e; margin-bottom: 12px;
+}
+.premium-badge-icon { font-size: 1rem; }
+.premium-reads-left { font-size: 0.74rem; font-weight: 500; color: #b45309; border-left: 1px solid #f59e0b; padding-left: 8px; }
+
+/* ── Paywall ── */
+.paywall-preview {
+  -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+  pointer-events: none; user-select: none;
+}
+.paywall {
+  text-align: center; padding: 48px 32px; border: 2px solid #fde68a;
+  border-radius: 16px; background: linear-gradient(135deg, #fffbeb 0%, #fff 100%);
+  margin: 24px 0;
+}
+.paywall-icon  { font-size: 3rem; margin-bottom: 12px; }
+.paywall-title { font-size: 1.5rem; font-weight: 800; color: #1a1a1a; margin: 0 0 10px; }
+.paywall-sub   { font-size: 0.95rem; color: #666; line-height: 1.7; margin: 0 0 20px; }
+.paywall-features {
+  display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;
+  font-size: 0.85rem; font-weight: 600; color: #059669; margin-bottom: 24px;
+}
+.paywall-btn {
+  display: inline-block; padding: 14px 32px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff; font-size: 1rem; font-weight: 700; border: none;
+  border-radius: 100px; cursor: pointer; transition: opacity 0.2s;
+  font-family: inherit;
+}
+.paywall-btn:hover:not(:disabled) { opacity: 0.88; }
+.paywall-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.paywall-login { margin-top: 16px; font-size: 0.85rem; color: #888; }
+.paywall-link  { color: #3b5bdb; cursor: pointer; text-decoration: underline; }
+
+.paywall-btn { display: inline-block; text-decoration: none; }
+.paywall-actions { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.paywall-btn--outline {
+  background: transparent !important;
+  border: 2px solid #f59e0b !important;
+  color: #d97706 !important;
+}
+.paywall-btn--outline:hover { background: #fffbeb !important; }
+
+.premium-badge--active { background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-color: #34d399; color: #065f46; }

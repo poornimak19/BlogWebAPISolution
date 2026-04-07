@@ -229,6 +229,10 @@ namespace BlogWebAPIApp.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AudioUrl")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
                     b.Property<Guid>("AuthorId")
                         .HasColumnType("uniqueidentifier");
 
@@ -256,6 +260,9 @@ namespace BlogWebAPIApp.Migrations
                         .HasMaxLength(400)
                         .HasColumnType("nvarchar(400)");
 
+                    b.Property<bool>("IsPremium")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsRejected")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -279,6 +286,10 @@ namespace BlogWebAPIApp.Migrations
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("VideoUrl")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
 
                     b.Property<int>("Visibility")
                         .HasColumnType("int");
@@ -354,6 +365,31 @@ namespace BlogWebAPIApp.Migrations
                     b.HasIndex("TagId");
 
                     b.ToTable("PostTags");
+                });
+
+            modelBuilder.Entity("BlogWebAPIApp.Models.PremiumReadLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("UserId", "PostId")
+                        .IsUnique();
+
+                    b.ToTable("PremiumReadLogs");
                 });
 
             modelBuilder.Entity("BlogWebAPIApp.Models.Report", b =>
@@ -461,6 +497,9 @@ namespace BlogWebAPIApp.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<bool>("IsPremiumSubscriber")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsSuspended")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -473,6 +512,9 @@ namespace BlogWebAPIApp.Migrations
                     b.Property<byte[]>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("varbinary(max)");
+
+                    b.Property<DateTime?>("PremiumExpiresAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("Role")
                         .HasColumnType("int");
@@ -685,6 +727,25 @@ namespace BlogWebAPIApp.Migrations
                     b.Navigation("Tag");
                 });
 
+            modelBuilder.Entity("BlogWebAPIApp.Models.PremiumReadLog", b =>
+                {
+                    b.HasOne("BlogWebAPIApp.Models.Post", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BlogWebAPIApp.Models.User", "User")
+                        .WithMany("PremiumReadLogs")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BlogWebAPIApp.Models.Report", b =>
                 {
                     b.HasOne("BlogWebAPIApp.Models.User", "Reporter")
@@ -778,6 +839,8 @@ namespace BlogWebAPIApp.Migrations
                     b.Navigation("PostLikes");
 
                     b.Navigation("Posts");
+
+                    b.Navigation("PremiumReadLogs");
 
                     b.Navigation("Settings");
                 });

@@ -37,6 +37,7 @@ namespace BlogWebAPIApp.Context
         public DbSet<PostAudience> PostAudiences => Set<PostAudience>();
         public DbSet<Report> Reports => Set<Report>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+        public DbSet<PremiumReadLog> PremiumReadLogs => Set<PremiumReadLog>();
 
         // ── Audit-aware SaveChangesAsync ──────────────────────────────────────
 
@@ -321,6 +322,22 @@ namespace BlogWebAPIApp.Context
             b.Entity<Comment>()
                 .Property(c => c.IsFlagged)
                 .HasDefaultValue(false);
+
+            // ---------- PremiumReadLog ----------
+            b.Entity<PremiumReadLog>(e =>
+            {
+                e.HasKey(r => r.Id);
+                e.HasOne(r => r.User)
+                    .WithMany(u => u.PremiumReadLogs)
+                    .HasForeignKey(r => r.UserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+                e.HasOne(r => r.Post)
+                    .WithMany()
+                    .HasForeignKey(r => r.PostId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                // Non-unique: same user can read same post in different months
+                e.HasIndex(r => new { r.UserId, r.PostId });
+            });
 
             // ---------- AuditLog ----------
             b.Entity<AuditLog>(e =>

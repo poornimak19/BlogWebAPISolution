@@ -28,14 +28,21 @@ export class CreateBlogComponent implements OnInit {
   categoryInput = '';
   userSearchQuery   = '';
   userSearchResults = signal<UserSearchDto[]>([]);
-  allowedUsers      = signal<UserSearchDto[]>([]);   // selected users
+  allowedUsers      = signal<UserSearchDto[]>([]);
   searching         = signal(false);
+
+  audioUploading = signal(false);
+  videoUploading = signal(false);
+  audioUrl       = signal<string | null>(null);
+  videoUrl       = signal<string | null>(null);
+  audioFileName  = signal<string | null>(null);
+  videoFileName  = signal<string | null>(null);
 
   form = {
     title: '', excerpt: '', slug: '',
     visibility: 'Public' as 'Public' | 'Private',
     coverImageUrl: '', tagNames: [] as string[], categoryNames: [] as string[],
-    commentsEnabled: true, autoApprove: true
+    commentsEnabled: true, autoApprove: true, isPremium: false
   };
 
 suggestedTags = () => this.tags().filter(t => !this.form.tagNames.includes(t.name.toLowerCase())).slice(0, 8);
@@ -118,6 +125,31 @@ removeCategory(name: string): void {
       : [...this.form.categoryNames, name];
   }
 
+  onAudioSelected(e: Event): void {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.audioUploading.set(true);
+    this.audioFileName.set(file.name);
+    this.postSvc.uploadMedia(file).subscribe({
+      next: r => { this.audioUrl.set(r.url); this.audioUploading.set(false); },
+      error: () => { this.toast.error('Audio upload failed.'); this.audioUploading.set(false); this.audioFileName.set(null); }
+    });
+  }
+
+  onVideoSelected(e: Event): void {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.videoUploading.set(true);
+    this.videoFileName.set(file.name);
+    this.postSvc.uploadMedia(file).subscribe({
+      next: r => { this.videoUrl.set(r.url); this.videoUploading.set(false); },
+      error: () => { this.toast.error('Video upload failed.'); this.videoUploading.set(false); this.videoFileName.set(null); }
+    });
+  }
+
+  removeAudio(): void { this.audioUrl.set(null); this.audioFileName.set(null); }
+  removeVideo(): void { this.videoUrl.set(null); this.videoFileName.set(null); }
+
   save(status: 'Draft' | 'Published'): void {
     console.log(this.form.coverImageUrl)
     if (!this.form.title.trim()) { this.toast.error('Title is required.'); return; }
@@ -136,7 +168,10 @@ removeCategory(name: string): void {
       allowedUserIds:     this.allowedUsers().map(u => u.id),
       commentsEnabled: this.form.commentsEnabled,
       autoApproveComments: this.form.autoApprove,
-      coverImageUrl: this.form.coverImageUrl?.trim() ?? ""
+      coverImageUrl: this.form.coverImageUrl?.trim() ?? "",
+      audioUrl: this.audioUrl() ?? undefined,
+      videoUrl: this.videoUrl() ?? undefined,
+      isPremium: this.form.isPremium
     }).subscribe({
       next: post => {
         if (status === 'Published') {
