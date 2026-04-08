@@ -32,8 +32,8 @@ export class AuditLogsComponent implements OnInit {
 
   expandedId = signal<string | null>(null);
 
-  readonly actions   = ['', 'Create', 'Update', 'Delete', 'Login', 'Logout', 'Register', 'ForgotPassword', 'ResetPassword'];
-  readonly entities  = ['', 'Post', 'Comment', 'User', 'Tag', 'Category', 'PostLike', 'CommentLike', 'Follow'];
+  readonly actions   = ['', 'Create', 'Update', 'Delete', 'Login', 'Logout', 'Register', 'ForgotPassword', 'ResetPassword', 'Report', 'Resolve', 'Dismiss'];
+  readonly entities  = ['', 'Post', 'Comment', 'User', 'Tag', 'Category', 'PostLike', 'CommentLike', 'Follow', 'Report'];
   readonly statuses  = ['', 'Success', 'Failed'];
   readonly pageSizes = [10, 20, 50, 100];
 
@@ -82,7 +82,8 @@ export class AuditLogsComponent implements OnInit {
       Create: 'badge--success', Update: 'badge--info',
       Delete: 'badge--danger',  Login:  'badge--purple',
       Logout: 'badge--neutral', Register: 'badge--teal',
-      ForgotPassword: 'badge--warning', ResetPassword: 'badge--warning'
+      ForgotPassword: 'badge--warning', ResetPassword: 'badge--warning',
+      Report: 'badge--report',  Resolve: 'badge--success', Dismiss: 'badge--neutral'
     })[action] ?? 'badge--neutral';
   }
 

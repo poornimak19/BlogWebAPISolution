@@ -83,12 +83,17 @@
             Drafts {{ drafts().length > 0 ? '(' + drafts().length + ')' : '' }}
           </button>
         }
+        @if (isOwnProfile()) {
+          <button class="tab" [class.tab--on]="activeTab()==='reports'" (click)="switchToReports()">
+            My Reports {{ myReports().length > 0 ? '(' + myReports().length + ')' : '' }}
+          </button>
+        }
       </div>
     </div>
 
     <div class="profile-content">
       <!-- Membership status card — own profile only -->
-      @if (isOwnProfile()) {
+      <!-- @if (isOwnProfile()) {
         @if (isPremium()) {
           <div class="membership-card membership-card--premium">
             <div class="mc-left">
@@ -103,7 +108,7 @@
             </div>
             <a routerLink="/premium" class="mc-btn mc-btn--manage">Manage</a>
           </div>
-        } @else {
+         } @else {
           <div class="membership-card membership-card--free">
             <div class="mc-left">
               <span class="mc-icon">📖</span>
@@ -115,7 +120,7 @@
             <a routerLink="/premium" class="mc-btn mc-btn--upgrade">👑 Upgrade to Premium</a>
           </div>
         }
-      }
+      } -->
 
       @if (activeTab() === 'following') {
         <div class="following-section">
@@ -177,6 +182,48 @@
           </div>
         } @else {
           <div class="empty-state"><div class="empty-icon">📝</div><h3>No drafts</h3></div>
+        }
+      }
+
+      @if (activeTab() === 'reports') {
+        @if (myReports().length === 0) {
+          <div class="empty-state">
+            <div class="empty-icon">🏳️</div>
+            <h3>No reports submitted</h3>
+            <p>Reports you submit on posts will appear here.</p>
+          </div>
+        } @else {
+          <div class="my-reports-list">
+            @for (r of myReports(); track r.id) {
+              <div class="my-report-card my-report-card--{{ r.status.toLowerCase() }}">
+                <div class="mrc-top">
+                  <span class="mrc-status mrc-status--{{ r.status.toLowerCase() }}">
+                    @if (r.status === 'Open') { <i class="bi bi-hourglass-split"></i> }
+                    @else if (r.status === 'Resolved') { <i class="bi bi-check-circle-fill"></i> }
+                    @else { <i class="bi bi-x-circle"></i> }
+                    {{ r.status }}
+                  </span>
+                  <span class="mrc-date">Reported {{ r.createdAt | date:'MMM d, y' }}</span>
+                </div>
+                <p class="mrc-reason"><strong>Your reason:</strong> {{ r.reason }}</p>
+                @if (r.status !== 'Open') {
+                  <div class="mrc-resolution">
+                    <i class="bi bi-shield-check"></i>
+                    <div>
+                      <span>
+                        {{ r.status }} by admin
+                        <strong>{{ r.resolvedBy?.displayName || r.resolvedBy?.username || 'Admin' }}</strong>
+                        on {{ r.resolvedAt | date:'MMM d, y' }}
+                      </span>
+                      @if (r.resolutionNote) {
+                        <p class="mrc-note">"{{ r.resolutionNote }}"</p>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
         }
       }
     </div>

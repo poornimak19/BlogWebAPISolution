@@ -9,7 +9,7 @@ namespace BlogWebAPIApp.Mappers
         public static AuthorSummaryDto ToAuthorSummaryDto(this User u) =>
             new AuthorSummaryDto(u.Id, u.Username, u.DisplayName, u.AvatarUrl);
 
-        public static PostSummaryDto ToSummaryDto(this Post p) =>
+        public static PostSummaryDto ToSummaryDto(this Post p, int reportCount = 0) =>
             new PostSummaryDto(
                 p.Id,
                 p.Title,
@@ -28,7 +28,8 @@ namespace BlogWebAPIApp.Mappers
                 p.Author != null? p.Author.ToAuthorSummaryDto():new AuthorSummaryDto(Guid.Empty, "(unknown)", null, null),
                 p.PostTags.Select(t => t.Tag.Slug).ToList(),
                 p.PostCategories.Select(c => c.Category.Slug).ToList(),
-                p.Likes.Count
+                p.Likes.Count,
+                reportCount
             );
 
         public static PostDetailDto ToDetailDto(this Post p) =>

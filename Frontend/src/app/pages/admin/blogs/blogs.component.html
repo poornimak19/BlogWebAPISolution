@@ -64,6 +64,11 @@
                   {{ post.visibility }}
                 </span>
                 @if (post.isRejected) { <span class="badge badge--danger">Rejected</span> }
+                @if (post.reportCount > 0) {
+                  <span class="badge badge--report" title="{{ post.reportCount }} report(s)">
+                    <i class="bi bi-flag-fill"></i> {{ post.reportCount }} report{{ post.reportCount !== 1 ? 's' : '' }}
+                  </span>
+                }
               </div>
               <h3 class="post-title">{{ post.title }}</h3>
               <div class="post-meta">
@@ -81,7 +86,12 @@
 
             <div class="post-actions">
               <button class="act-btn act-btn--neutral" (click)="openPreview(post)">Preview</button>
-              <button class="act-btn act-btn--danger"  (click)="deletePost(post)">Delete</button>
+              <button class="act-btn act-btn--report-btn" (click)="openReports(post)">
+                <i class="bi bi-flag"></i> Reports
+                @if (post.reportCount > 0) {
+                  <span class="report-count-pill">{{ post.reportCount }}</span>
+                }
+              </button>
             </div>
 
           </div>
@@ -140,6 +150,69 @@
           }
 
           <div class="preview-content" [innerHTML]="p.contentHtml"></div>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Reports Modal -->
+@if (reportsPost()) {
+  <div class="preview-backdrop" (click)="closeReports()">
+    <div class="preview-modal reports-modal" (click)="$event.stopPropagation()">
+      <button class="preview-close" (click)="closeReports()">✕</button>
+      <div class="reports-header">
+        <i class="bi bi-flag-fill reports-icon"></i>
+        <div>
+          <h3 class="reports-title">Reports</h3>
+          <p class="reports-sub">{{ reportsPost()!.title }}</p>
+        </div>
+      </div>
+
+      @if (reportsLoading()) {
+        <div class="preview-loading">Loading reports…</div>
+      } @else if (reports().length === 0) {
+        <div class="reports-empty">
+          <i class="bi bi-check-circle" style="font-size:2rem;color:var(--color-success)"></i>
+          <p>No reports for this post.</p>
+        </div>
+      } @else {
+        <div class="reports-list">
+          @for (r of reports(); track r.id) {
+            <div class="report-item" [class.report-item--resolved]="r.status === 'Resolved'" [class.report-item--dismissed]="r.status === 'Dismissed'">
+              <div class="report-item-top">
+                <span class="report-reporter">
+                  <i class="bi bi-person-circle"></i>
+                  {{ r.reporter.displayName || r.reporter.username }}
+                </span>
+                <span class="report-date">{{ r.createdAt | date:'MMM d, y · h:mm a' }}</span>
+                <span class="report-status-badge report-status-badge--{{ r.status.toLowerCase() }}">{{ r.status }}</span>
+              </div>
+              <p class="report-reason">{{ r.reason }}</p>
+
+              @if (r.status !== 'Open') {
+                <div class="report-resolution">
+                  <i class="bi bi-check2-circle"></i>
+                  <span>
+                    {{ r.status }} by <strong>{{ r.resolvedBy?.displayName || r.resolvedBy?.username || 'Admin' }}</strong>
+                    on {{ r.resolvedAt | date:'MMM d, y' }}
+                  </span>
+                  @if (r.resolutionNote) {
+                    <span class="resolution-note">"{{ r.resolutionNote }}"</span>
+                  }
+                </div>
+              } @else {
+                <div class="report-actions">
+                  <button class="act-btn act-btn--success" (click)="resolveReport(r)">
+                    <i class="bi bi-check-lg"></i> Resolve
+                  </button>
+                  <button class="act-btn act-btn--neutral" (click)="dismissReport(r)">
+                    <i class="bi bi-x-lg"></i> Dismiss
+                  </button>
+                </div>
+              }
+            </div>
+          }
         </div>
       }
     </div>

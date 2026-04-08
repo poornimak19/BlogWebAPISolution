@@ -5,6 +5,7 @@ using BlogWebAPIApp.Models;
 using BlogWebAPIApp.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using static BlogWebAPIApp.Models.Enum;
 
 namespace BlogWebAPIApp.Controllers
@@ -15,10 +16,14 @@ namespace BlogWebAPIApp.Controllers
     public class PostsController : ControllerBase
     {
         private readonly IPostService _posts;
+        private readonly IRepository<Guid, Report> _reports;
+        private readonly IAuditLogService _auditLogs;
 
-        public PostsController(IPostService posts)
+        public PostsController(IPostService posts, IRepository<Guid, Report> reports, IAuditLogService auditLogs)
         {
-            _posts = posts;
+            _posts     = posts;
+            _reports   = reports;
+            _auditLogs = auditLogs;
         }
 
         // Create a new post (Blogger/Admin)
@@ -331,9 +336,141 @@ namespace BlogWebAPIApp.Controllers
             [FromQuery] string? visibility = null)
         {
             var (items, total) = await _posts.GetAllPosts(page, pageSize, q, visibility);
+
+            // Batch-fetch report counts for this page
+            var postIds = items.Select(p => p.Id).ToList();
+            var reportCounts = await _reports.GetQueryable()
+                .Where(r => r.TargetType == ReportTargetType.Post && postIds.Contains(r.TargetId) && r.Status == ReportStatus.Open)
+                .GroupBy(r => r.TargetId)
+                .Select(g => new { PostId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.PostId, x => x.Count);
+
             return Ok(new PagedResponseDto<PostSummaryDto>(
-                items.Select(p => p.ToSummaryDto()).ToList(),
+                items.Select(p => p.ToSummaryDto(reportCounts.GetValueOrDefault(p.Id, 0))).ToList(),
                 total, page, pageSize));
+        }
+
+        // ANY logged-in user: Report a post
+        [Authorize]
+        [HttpPost("{id:guid}/report")]
+        public async Task<IActionResult> ReportPost(Guid id, [FromBody] ReportPostRequestDto dto)
+        {
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+            var userId = User.GetUserId();
+            if (userId is null) return Unauthorized();
+
+            // Prevent duplicate open reports from same user
+            var already = await _reports.GetQueryable().AnyAsync(r =>
+                r.TargetType == ReportTargetType.Post &&
+                r.TargetId   == id &&
+                r.ReporterId == userId.Value &&
+                r.Status     == ReportStatus.Open);
+
+            if (already)
+                return Conflict(new { message = "You have already reported this post." });
+
+            await _reports.Add(new Report
+            {
+                TargetType = ReportTargetType.Post,
+                TargetId   = id,
+                ReporterId = userId.Value,
+                Reason     = dto.Reason.Trim(),
+                Status     = ReportStatus.Open,
+                CreatedAt  = DateTime.UtcNow
+            });
+
+            await _auditLogs.LogAsync(
+                AuditActions.Report, "Report", id.ToString(),
+                userId: userId.Value,
+                description: $"User reported post '{id}': {dto.Reason.Trim()}");
+
+            return Ok(new { message = "Report submitted. Thank you." });
+        }
+
+        // PUBLIC: Get report count for a post (admin use)
+        [Authorize(Roles = "Admin")]
+        [HttpGet("{id:guid}/report-count")]
+        public async Task<IActionResult> GetReportCount(Guid id)
+        {
+            var count = await _reports.GetQueryable()
+                .CountAsync(r => r.TargetType == ReportTargetType.Post && r.TargetId == id);
+            return Ok(new { count });
+        }
+
+        // ADMIN: Get all reports for a post
+        [Authorize(Roles = "Admin")]
+        [HttpGet("{id:guid}/reports")]
+        public async Task<IActionResult> GetPostReports(Guid id)
+        {
+            var reports = await _reports.GetQueryable()
+                .Where(r => r.TargetType == ReportTargetType.Post && r.TargetId == id)
+                .Include(r => r.Reporter)
+                .Include(r => r.ResolvedBy)
+                .OrderByDescending(r => r.CreatedAt)
+                .Select(r => new
+                {
+                    r.Id,
+                    r.Reason,
+                    r.Status,
+                    r.CreatedAt,
+                    r.ResolvedAt,
+                    r.ResolutionNote,
+                    Reporter   = new { r.Reporter.Username, r.Reporter.DisplayName },
+                    ResolvedBy = r.ResolvedBy == null ? null : new { r.ResolvedBy.Username, r.ResolvedBy.DisplayName }
+                })
+                .ToListAsync();
+
+            return Ok(reports);
+        }
+
+        // ADMIN: Resolve a report
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{postId:guid}/reports/{reportId:guid}/resolve")]
+        public async Task<IActionResult> ResolveReport(Guid postId, Guid reportId, [FromBody] ResolveReportDto dto)
+        {
+            var report = await _reports.GetQueryable()
+                .FirstOrDefaultAsync(r => r.Id == reportId && r.TargetId == postId);
+            if (report is null) return NotFound();
+
+            var adminId = User.GetUserId();
+            report.Status         = ReportStatus.Resolved;
+            report.ResolvedAt     = DateTime.UtcNow;
+            report.ResolvedById   = adminId;
+            report.ResolutionNote = dto.Note?.Trim();
+
+            await _reports.SaveChangesAsync();
+
+            await _auditLogs.LogAsync(
+                AuditActions.Resolve, "Report", reportId.ToString(),
+                userId: adminId,
+                description: $"Admin resolved report '{reportId}' on post '{postId}'" + (dto.Note != null ? $": {dto.Note}" : ""));
+
+            return Ok(new { message = "Report resolved." });
+        }
+
+        // ADMIN: Dismiss a report
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{postId:guid}/reports/{reportId:guid}/dismiss")]
+        public async Task<IActionResult> DismissReport(Guid postId, Guid reportId)
+        {
+            var report = await _reports.GetQueryable()
+                .FirstOrDefaultAsync(r => r.Id == reportId && r.TargetId == postId);
+            if (report is null) return NotFound();
+
+            var adminId = User.GetUserId();
+            report.Status       = ReportStatus.Dismissed;
+            report.ResolvedAt   = DateTime.UtcNow;
+            report.ResolvedById = adminId;
+
+            await _reports.SaveChangesAsync();
+
+            await _auditLogs.LogAsync(
+                AuditActions.Dismiss, "Report", reportId.ToString(),
+                userId: adminId,
+                description: $"Admin dismissed report '{reportId}' on post '{postId}'");
+
+            return Ok(new { message = "Report dismissed." });
         }
 
         // Upload audio or video file — returns a relative URL

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AdminService } from '../../../services/admin.service';
 import { ToastService } from '../../../services/ui.services';
-import { AdminPostDto } from '../../../models/admin.models';
+import { AdminPostDto, PostReportDto } from '../../../models/admin.models';
 import { AdminNavComponent } from '../../../components/admin-nav/admin-nav.component';
 import { environment } from '../../../../environments/environment';
 import { PostDetailDto } from '../../../models/post.models';
@@ -36,6 +36,10 @@ export class AdminBlogsComponent implements OnInit {
   previewPost    = signal<PostDetailDto | null>(null);
   previewLoading = signal(false);
 
+  reportsPost    = signal<AdminPostDto | null>(null);
+  reports        = signal<PostReportDto[]>([]);
+  reportsLoading = signal(false);
+
   ngOnInit(): void { this.load(); }
 
   load(): void {
@@ -61,16 +65,51 @@ export class AdminBlogsComponent implements OnInit {
 
   closePreview(): void { this.previewPost.set(null); }
 
-  mediaUrl(url: string): string {
-    return url.startsWith('http') ? url : `${mediaBase}${url}`;
+  openReports(post: AdminPostDto): void {
+    this.reportsPost.set(post);
+    this.reports.set([]);
+    this.reportsLoading.set(true);
+    this.adminSvc.getPostReports(post.id).subscribe({
+      next: r  => { this.reports.set(r); this.reportsLoading.set(false); },
+      error: () => { this.toast.error('Failed to load reports.'); this.reportsLoading.set(false); }
+    });
   }
 
-  deletePost(post: AdminPostDto): void {
-    if (!confirm(`Permanently delete "${post.title}"?`)) return;
-    this.adminSvc.adminDeletePost(post.id).subscribe({
-      next: () => { this.posts.update(l => l.filter(p => p.id !== post.id)); this.total.update(v => v - 1); this.toast.success('Post deleted.'); },
-      error: () => this.toast.error('Failed to delete.')
+  closeReports(): void { this.reportsPost.set(null); }
+
+  resolveReport(report: PostReportDto): void {
+    const note = prompt('Resolution note (optional):') ?? undefined;
+    this.adminSvc.resolveReport(this.reportsPost()!.id, report.id, note).subscribe({
+      next: () => {
+        this.reports.update(list => list.map(r =>
+          r.id === report.id ? { ...r, status: 'Resolved', resolvedAt: new Date().toISOString(), resolutionNote: note } : r
+        ));
+        this.posts.update(list => list.map(p =>
+          p.id === this.reportsPost()!.id ? { ...p, reportCount: Math.max(0, p.reportCount - 1) } : p
+        ));
+        this.toast.success('Report resolved.');
+      },
+      error: () => this.toast.error('Failed to resolve.')
     });
+  }
+
+  dismissReport(report: PostReportDto): void {
+    this.adminSvc.dismissReport(this.reportsPost()!.id, report.id).subscribe({
+      next: () => {
+        this.reports.update(list => list.map(r =>
+          r.id === report.id ? { ...r, status: 'Dismissed', resolvedAt: new Date().toISOString() } : r
+        ));
+        this.posts.update(list => list.map(p =>
+          p.id === this.reportsPost()!.id ? { ...p, reportCount: Math.max(0, p.reportCount - 1) } : p
+        ));
+        this.toast.success('Report dismissed.');
+      },
+      error: () => this.toast.error('Failed to dismiss.')
+    });
+  }
+
+  mediaUrl(url: string): string {
+    return url.startsWith('http') ? url : `${mediaBase}${url}`;
   }
 
   get totalPages(): number { return Math.ceil(this.total() / this.pageSize); }

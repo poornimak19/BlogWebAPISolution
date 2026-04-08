@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DatePipe, SlicePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { PostService } from '../../services/post.service';
 import { ReactionService } from '../../services/blog.services';
 import { AuthService } from '../../services/auth.service';
@@ -14,7 +15,7 @@ import { PremiumService, PremiumAccessDto } from '../../services/premium.service
 @Component({
   selector: 'app-blog-detail',
   standalone: true,
-  imports: [RouterLink, DatePipe, SlicePipe, CommentComponent, PostCardComponent],
+  imports: [RouterLink, DatePipe, SlicePipe, FormsModule, CommentComponent, PostCardComponent],
   templateUrl: './blog-detail.component.html',
   styleUrls: ['./blog-detail.component.css']
 })
@@ -34,6 +35,11 @@ export class BlogDetailComponent implements OnInit {
   likeCount    = signal(0);
   access       = signal<PremiumAccessDto | null>(null);
   subscribing  = signal(false);
+
+  // Report
+  reportOpen   = signal(false);
+  reportReason = '';
+  reporting    = signal(false);
 
   readonly premiumSvc = inject(PremiumService);
   readonly mediaBase  = environment.apiUrl.replace('/api', '');
@@ -138,6 +144,21 @@ export class BlogDetailComponent implements OnInit {
     this.postSvc.delete(this.post()!.id).subscribe({
       next: () => { this.toast.success('Story deleted.'); this.router.navigate(['/']); },
       error: () => this.toast.error('Failed to delete.')
+    });
+  }
+
+  openReport(): void {
+    if (!this.auth.isLoggedIn()) { this.loginModal.open(); return; }
+    this.reportReason = '';
+    this.reportOpen.set(true);
+  }
+
+  submitReport(): void {
+    if (!this.reportReason.trim()) { this.toast.error('Please enter a reason.'); return; }
+    this.reporting.set(true);
+    this.reactionSvc.reportPost(this.post()!.id, this.reportReason.trim()).subscribe({
+      next: r  => { this.toast.success(r.message); this.reportOpen.set(false); this.reporting.set(false); },
+      error: e => { this.toast.error(e.error?.message || 'Failed to submit report.'); this.reporting.set(false); }
     });
   }
 

@@ -57,5 +57,8 @@ namespace BlogWebAPIApp.Models
         public const string Register = "Register";
         public const string ForgotPassword = "ForgotPassword";
         public const string ResetPassword  = "ResetPassword";
+        public const string Report  = "Report";
+        public const string Resolve = "Resolve";
+        public const string Dismiss = "Dismiss";
     }
 }

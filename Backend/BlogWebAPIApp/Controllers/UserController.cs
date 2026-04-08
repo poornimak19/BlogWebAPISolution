@@ -5,6 +5,8 @@ using BlogWebAPIApp.Models;
 using BlogWebAPIApp.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using static BlogWebAPIApp.Models.Enum;
 
 namespace BlogWebAPIApp.Controllers
 {
@@ -15,10 +17,12 @@ namespace BlogWebAPIApp.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _users;
+        private readonly IRepository<Guid, Report> _reports;
 
-        public UsersController(IUserService users)
+        public UsersController(IUserService users, IRepository<Guid, Report> reports)
         {
-            _users = users;
+            _users   = users;
+            _reports = reports;
         }
 
         // PUBLIC: Get user by username
@@ -112,6 +116,37 @@ namespace BlogWebAPIApp.Controllers
             return Ok(new { url });
         }
         #endregion
+
+        // AUTH: Get my submitted reports
+        #region My reports
+        [Authorize]
+        [HttpGet("me/reports")]
+        public async Task<IActionResult> GetMyReports()
+        {
+            var userId = User.GetUserId();
+            if (userId is null) return Unauthorized();
+
+            var reports = await _reports.GetQueryable()
+                .Where(r => r.ReporterId == userId.Value && r.TargetType == ReportTargetType.Post)
+                .Include(r => r.ResolvedBy)
+                .OrderByDescending(r => r.CreatedAt)
+                .Select(r => new
+                {
+                    r.Id,
+                    r.TargetId,
+                    r.Reason,
+                    r.Status,
+                    r.CreatedAt,
+                    r.ResolvedAt,
+                    r.ResolutionNote,
+                    ResolvedBy = r.ResolvedBy == null ? null : new { r.ResolvedBy.DisplayName, r.ResolvedBy.Username }
+                })
+                .ToListAsync();
+
+            return Ok(reports);
+        }
+        #endregion
+
         [Authorize(Roles = "Admin")]
         [HttpGet("admin/all")]
         public async Task<ActionResult<IEnumerable<UserAdminDto>>> GetAllUsers()

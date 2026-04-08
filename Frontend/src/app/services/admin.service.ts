@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, catchError, forkJoin, map, of, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { UserAdminDto, AdminStatsDto, AdminPostDto, AdminCommentDto } from '../models/admin.models';
+import { UserAdminDto, AdminStatsDto, AdminPostDto, AdminCommentDto, PostReportDto } from '../models/admin.models';
 import { TagDto, CategoryDto } from '../models/blog.models';
 import { PagedResponseDto } from '../models/post.models';
 
@@ -96,6 +96,21 @@ export class AdminService {
 
   adminDeletePost(postId: string): Observable<any> {
     return this.http.delete(`${this.base}/posts/${postId}/admin-delete`)
+      .pipe(catchError(e => throwError(() => e)));
+  }
+
+  getPostReports(postId: string): Observable<PostReportDto[]> {
+    return this.http.get<PostReportDto[]>(`${this.base}/posts/${postId}/reports`)
+      .pipe(catchError(e => throwError(() => e)));
+  }
+
+  resolveReport(postId: string, reportId: string, note?: string): Observable<any> {
+    return this.http.put(`${this.base}/posts/${postId}/reports/${reportId}/resolve`, { note: note ?? null })
+      .pipe(catchError(e => throwError(() => e)));
+  }
+
+  dismissReport(postId: string, reportId: string): Observable<any> {
+    return this.http.put(`${this.base}/posts/${postId}/reports/${reportId}/dismiss`, {})
       .pipe(catchError(e => throwError(() => e)));
   }
 

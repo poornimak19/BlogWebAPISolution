@@ -84,6 +84,14 @@
             @if (isAuthor()) {
               <a [routerLink]="['/edit', post()!.id]" class="act-btn act-btn--edit">Edit</a>
               <button class="act-btn act-btn--danger" (click)="deletePost()">Delete</button>
+            } @else if (auth.isLoggedIn()) {
+              <button class="act-btn act-btn--report" (click)="openReport()" title="Report this post">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                  <line x1="4" y1="22" x2="4" y2="15"/>
+                </svg>
+                Report
+              </button>
             }
           </div>
         </div>
@@ -191,5 +199,29 @@
     <h2>Story not found</h2>
     <p>This story may have been removed or made private.</p>
     <a routerLink="/" class="nf-btn">← Back to home</a>
+  </div>
+}
+
+<!-- Report Modal -->
+@if (reportOpen()) {
+  <div class="report-backdrop" (click)="reportOpen.set(false)">
+    <div class="report-modal" (click)="$event.stopPropagation()">
+      <div class="report-header">
+        <h3>Report this story</h3>
+        <button class="report-close" (click)="reportOpen.set(false)">✕</button>
+      </div>
+      <div class="report-body">
+        <p class="report-hint">Tell us why this content is inappropriate.</p>
+        <textarea [(ngModel)]="reportReason" class="report-textarea" rows="4"
+          placeholder="e.g. Spam, Hate speech, Misinformation…" maxlength="512"></textarea>
+        <p class="report-char">{{ reportReason.length }}/512</p>
+      </div>
+      <div class="report-footer">
+        <button class="act-btn" (click)="reportOpen.set(false)">Cancel</button>
+        <button class="act-btn act-btn--danger" (click)="submitReport()" [disabled]="reporting() || !reportReason.trim()">
+          {{ reporting() ? 'Submitting…' : 'Submit Report' }}
+        </button>
+      </div>
+    </div>
   </div>
 }

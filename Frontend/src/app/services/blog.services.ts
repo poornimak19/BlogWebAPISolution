@@ -6,7 +6,7 @@ import { environment } from '../../environments/environment';
 import {
   CommentDto, CreateCommentRequestDto, UpdateCommentRequestDto, ThreadedComment,
   ReactionResponseDto, FollowToggleResponseDto, FollowCountsDto,
-  TagDto, CategoryDto, UserProfileDto, UpdateUserProfileDto,UserSearchDto
+  TagDto, CategoryDto, UserProfileDto, UpdateUserProfileDto, UserSearchDto, MyReportDto
 } from '../models/blog.models';
 import { PagedResponseDto } from '../models/post.models';
 
@@ -48,6 +48,11 @@ export class ReactionService {
 
   toggleCommentLike(commentId: string): Observable<ReactionResponseDto> {
     return this.http.post<ReactionResponseDto>(`${this.base}/comments/${commentId}/like`, {})
+      .pipe(catchError(e => throwError(() => e)));
+  }
+
+  reportPost(postId: string, reason: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/posts/${postId}/report`, { reason })
       .pipe(catchError(e => throwError(() => e)));
   }
 }
@@ -103,6 +108,10 @@ export class UserService {
     const fd = new FormData();
     fd.append('file', file);
     return this.http.post<{ url: string }>(`${this.base}/me/avatar`, fd).pipe(catchError(e => throwError(() => e)));
+  }
+
+  getMyReports(): Observable<MyReportDto[]> {
+    return this.http.get<MyReportDto[]>(`${this.base}/me/reports`).pipe(catchError(e => throwError(() => e)));
   }
 
   searchUsers(q: string): Observable<UserSearchDto[]> {

@@ -43,6 +43,7 @@ export interface AdminPostDto {
   };
   tags: string[];
   categories: string[];
+  reportCount: number;
 }
 
 export interface AdminCommentDto {
@@ -57,4 +58,15 @@ export interface AdminCommentDto {
     username: string;
     displayName?: string;
   };
+}
+
+export interface PostReportDto {
+  id: string;
+  reason: string;
+  status: string;
+  createdAt: string;
+  resolvedAt?: string;
+  resolutionNote?: string;
+  reporter: { username: string; displayName?: string; };
+  resolvedBy?: { username: string; displayName?: string; };
 }

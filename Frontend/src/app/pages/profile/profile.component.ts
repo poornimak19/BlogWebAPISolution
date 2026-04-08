@@ -6,7 +6,7 @@ import { UserService, FollowService } from '../../services/blog.services';
 import { PostService } from '../../services/post.service';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/ui.services';
-import { UserProfileDto } from '../../models/blog.models';
+import { UserProfileDto, MyReportDto } from '../../models/blog.models';
 import { PostSummaryDto } from '../../models/post.models';
 import { PostCardComponent } from '../../components/post-card/post-card.component';
 import { environment } from '../../../environments/environment';
@@ -33,8 +33,11 @@ export class ProfileComponent implements OnInit {
   saving        = signal(false);
   isFollowing   = signal(false);
   editMode      = signal(false);
-  activeTab     = signal<'posts' | 'drafts' | 'following'>('posts');
-  avatarPreview = signal<string>('');   // base64 preview from file picker
+  activeTab     = signal<'posts' | 'drafts' | 'following' | 'reports'>('posts');
+  avatarPreview = signal<string>('');
+
+  myReports     = signal<MyReportDto[]>([]);
+  reportsLoaded = false;
 
   ef = { displayName: '', bio: '', avatarUrl: '' };
 
@@ -106,6 +109,15 @@ export class ProfileComponent implements OnInit {
 
   switchToDrafts(): void { this.activeTab.set('drafts'); if (this.isOwnProfile() && this.drafts().length === 0) this.loadAllMyPosts(); }
   switchToFollowing(): void { this.activeTab.set('following'); }
+  switchToReports(): void {
+    this.activeTab.set('reports');
+    if (!this.reportsLoaded) {
+      this.userSvc.getMyReports().subscribe({
+        next: r => { this.myReports.set(r); this.reportsLoaded = true; },
+        error: () => this.toast.error('Failed to load reports.')
+      });
+    }
+  }
 
   toggleFollow(): void {
     const p = this.profile(); if (!p) return;

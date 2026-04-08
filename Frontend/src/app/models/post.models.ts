@@ -25,6 +25,7 @@ export interface PostSummaryDto {
   tags: string[];
   categories: string[];
   likesCount: number;
+  reportCount: number;
 }
 
 export interface PostDetailDto {

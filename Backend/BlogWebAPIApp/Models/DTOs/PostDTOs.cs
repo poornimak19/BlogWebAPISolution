@@ -90,7 +90,8 @@ namespace BlogWebAPIApp.Models.DTOs
         AuthorSummaryDto Author,
         IReadOnlyList<string> Tags,
         IReadOnlyList<string> Categories,
-        int LikesCount
+        int LikesCount,
+        int ReportCount
     );
 
     public record PostDetailDto(
@@ -120,4 +121,15 @@ namespace BlogWebAPIApp.Models.DTOs
 
     public record PagedResponseDto<T>(IReadOnlyList<T> Items, int Total, int Page, int PageSize);
 
+    public class ReportPostRequestDto
+    {
+        [Required, MaxLength(512)]
+        public string Reason { get; set; } = default!;
+    }
+
+    public class ResolveReportDto
+    {
+        [MaxLength(512)]
+        public string? Note { get; set; }
+    }
 }

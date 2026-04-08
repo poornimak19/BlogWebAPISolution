@@ -85,3 +85,14 @@ export interface UserSearchDto {
   displayName?: string;
   avatarUrl?: string;
 }
+
+export interface MyReportDto {
+  id: string;
+  targetId: string;
+  reason: string;
+  status: string;
+  createdAt: string;
+  resolvedAt?: string;
+  resolutionNote?: string;
+  resolvedBy?: { username: string; displayName?: string; };
+}
